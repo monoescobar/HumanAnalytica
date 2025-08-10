@@ -1,38 +1,243 @@
 // main.js for Human Analytica - extracted from index.html
 
-console.log('Dreams and Poems - Simple Video Player Starting...');
+// Configuration object for timeouts and settings
+const CONFIG = {
+    timeouts: {
+        ui: 3000,
+        clickDelay: 300,
+        tapDuration: 200,
+        gestureDetection: 500,
+        debugCheck: 5000,
+        fullscreenHint: 2000,
+        fallbackInit: 1000
+    }
+};
 
+// Logger object for consistent logging
+const LOGGER = {
+    debug: (...args) => console.log('[DEBUG]', ...args),
+    system: (...args) => console.log('[SYSTEM]', ...args),
+    user: (...args) => console.log('[USER]', ...args),
+    ui: (...args) => console.log('[UI]', ...args),
+    video: (...args) => console.log('[VIDEO]', ...args),
+    warn: (...args) => console.warn('[WARN]', ...args),
+    error: (...args) => console.error('[ERROR]', ...args)
+};
+
+// Utility function to detect mobile devices
 function isMobile() {
-    return window.innerWidth <= 768 || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
 }
 
-let currentVideoIndex = 0;
-let videoList = [];
-let isPlaying = false;
-let video = document.getElementById('video');
-let video2 = document.getElementById('video2');
-let activeVideo = video;
-let inactiveVideo = video2;
-let deviceInfo = document.getElementById('device-info');
-let loading = document.getElementById('loading');
-let soundNotification = document.getElementById('sound-notification');
-let nextButton = document.getElementById('next-button');
-let humanAnalyticaButton = document.getElementById('human-analytica-button');
-let infoArea = document.getElementById('info-area');
-let notificationTimeout;
-let deviceInfoTimeout;
-let infoVisible = false;
-let infoAreaVisible = false;
-let isTransitioning = false;
-let hasShownLoadingOnce = false;
-let hasShownInitialInstructions = false;
-let soundToggleCount = 0;
-let loadingToggleCount = 0;
+const VideoManager = {};
+const UIStateManager = {};
+// --- Move video logic into VideoManager ---
+VideoManager.loadNextVideo = function(showUI = true) {
+    if (STATE.isTransitioning) return;
+    const isUserTriggered = showUI === true;
+    ELEMENTS.soundNotification.classList.remove('show');
+    
+    if (isUserTriggered) {
+        COUNTERS.loadingToggle++;
+        LOGGER.debug(`Loading toggle count: ${COUNTERS.loadingToggle}`);
+        if (COUNTERS.loadingToggle <= 1) {
+            ELEMENTS.loading.classList.add('show');
+            LOGGER.ui(`Showing loading screen (toggle ${COUNTERS.loadingToggle}/1)`);
+        } else {
+            LOGGER.debug(`Loading screen hidden (toggle ${COUNTERS.loadingToggle} > 1)`);
+        }
+        if (!document.fullscreenElement) {
+            ELEMENTS.nextButton.classList.add('show');
+            ELEMENTS.humanAnalyticaButton.classList.add('show');
+        } else {
+            ELEMENTS.nextButton.classList.remove('show');
+            ELEMENTS.humanAnalyticaButton.classList.remove('show');
+        }
+        STATE.hasShownLoadingOnce = true;
+        if (TIMEOUTS.notification) clearTimeout(TIMEOUTS.notification);
+        TIMEOUTS.notification = setTimeout(() => {
+            ELEMENTS.loading.classList.remove('show');
+            ELEMENTS.nextButton.classList.remove('show');
+            ELEMENTS.humanAnalyticaButton.classList.remove('show');
+            LOGGER.debug('Backup timeout: Force hiding loading UI (double click/tap)');
+        }, CONFIG.timeouts.ui);
+    }
+    
+    const nextIndex = (STATE.currentVideoIndex + 1) % STATE.videoList.length;
+    LOGGER.video(`Loading next video: ${nextIndex + 1}/${STATE.videoList.length}${isUserTriggered ? ' (with UI)' : ' (silent)'}`);
+    STATE.isTransitioning = true;
+    const videoUrl = STATE.videoList[nextIndex];
+    const fileName = videoUrl.split('/').pop().split('?')[0];
+    
+    // Load the video in the inactive video element
+    STATE.inactiveVideo.src = videoUrl;
+    
+    // Ensure the new video has the same muted state as the current one
+    STATE.inactiveVideo.muted = STATE.activeVideo.muted;
+    
+    // Wait for the video to load, then transition
+    const handleVideoLoad = () => {
+        STATE.inactiveVideo.removeEventListener('loadeddata', handleVideoLoad);
+        STATE.inactiveVideo.removeEventListener('error', handleVideoError);
+        
+        // Start playing the new video
+        STATE.inactiveVideo.play().then(() => {
+            // Fade out current video, fade in new video
+            STATE.activeVideo.style.opacity = '0';
+            STATE.inactiveVideo.style.opacity = '1';
+            
+            // Swap the video references
+            const temp = STATE.activeVideo;
+            STATE.activeVideo = STATE.inactiveVideo;
+            STATE.inactiveVideo = temp;
+            
+            // Update the index
+            STATE.currentVideoIndex = nextIndex;
+            STATE.isTransitioning = false;
+            
+            LOGGER.video(`Video ${nextIndex + 1} loaded and playing: ${fileName}`);
+            
+            // Update UI elements only if this is the first video or user triggered
+            if (STATE.currentVideoIndex === 0 || isUserTriggered) {
+                updateNotificationText();
+            }
+        }).catch(error => {
+            LOGGER.error('Error playing video:', error);
+            STATE.isTransitioning = false;
+        });
+    };
+    
+    const handleVideoError = () => {
+        STATE.inactiveVideo.removeEventListener('loadeddata', handleVideoLoad);
+        STATE.inactiveVideo.removeEventListener('error', handleVideoError);
+        LOGGER.error('Error loading video:', videoUrl);
+        STATE.isTransitioning = false;
+    };
+    
+    STATE.inactiveVideo.addEventListener('loadeddata', handleVideoLoad);
+    STATE.inactiveVideo.addEventListener('error', handleVideoError);
+};
 
-const linkedInProfile = 'https://www.linkedin.com/in/carlos-escobar-32156b24/';
+function updateNotificationText() {
+    const text = ELEMENTS.soundNotification.querySelector('.text');
+    const mobile = isMobile();
+    if (mobile) {
+        text.innerHTML = 'One Tap<br>Sound On<br><br>Two Taps<br>Next One';
+    } else {
+        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+        if (isMac) {
+            text.innerHTML = 'One Click Sound On<br><br>Two Clicks Next One<br><br>Cmd + Click Full Screen';
+        } else {
+            text.innerHTML = 'One Click Sound On<br><br>Two Clicks Next One<br><br>Ctrl + Click Full Screen';
+        }
+    }
+    document.getElementById('sound-status').textContent = `Sound: ${STATE.activeVideo && STATE.activeVideo.muted ? 'Off' : 'On'}`;
+}
+
+VideoManager.toggleMute = function() {
+    if (!STATE.activeVideo) {
+        LOGGER.warn('No active video to toggle mute');
+        return;
+    }
+    
+    ELEMENTS.loading.classList.remove('show');
+    const newMutedState = !STATE.activeVideo.muted;
+    
+    // Apply mute state to both videos
+    STATE.activeVideo.muted = newMutedState;
+    STATE.inactiveVideo.muted = newMutedState;
+    
+    // If unmuting and video is paused, try to play it
+    if (!newMutedState) {
+        if (STATE.activeVideo.paused) {
+            STATE.activeVideo.play().catch(error => {
+                LOGGER.debug('Error playing video:', error);
+            });
+        }
+        
+        // Try to resume audio context if suspended
+        if (window.AudioContext || window.webkitAudioContext) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!window.audioContext) {
+                window.audioContext = new AudioContext();
+            }
+            if (window.audioContext.state === 'suspended') {
+                window.audioContext.resume().then(() => {
+                    LOGGER.debug('Audio context resumed');
+                }).catch(err => {
+                    LOGGER.debug('Error resuming audio context:', err);
+                });
+            }
+        }
+    }
+    
+    showSoundNotification();
+    LOGGER.user(`Audio ${newMutedState ? 'muted' : 'unmuted'}`);
+};
+
+VideoManager.transitionToNext = function(showUI = true) {
+    VideoManager.loadNextVideo(showUI);
+};
+
+UIStateManager.toggleFullscreen = function() {
+    if (document.fullscreenElement) {
+        document.exitFullscreen().catch(err => {
+            LOGGER.debug('Error exiting fullscreen:', err);
+        });
+    } else {
+        ELEMENTS.videoContainer.requestFullscreen().catch(err => {
+            LOGGER.debug('Error entering fullscreen:', err);
+        });
+    }
+};
+
+// DOM Element References
+const ELEMENTS = {
+    video: document.getElementById('video'),
+    video2: document.getElementById('video2'),
+    deviceInfo: document.getElementById('device-info'),
+    loading: document.getElementById('loading'),
+    soundNotification: document.getElementById('sound-notification'),
+    nextButton: document.getElementById('next-button'),
+    humanAnalyticaButton: document.getElementById('human-analytica-button'),
+    infoArea: document.getElementById('info-area'),
+    deviceType: document.getElementById('device-type'),
+    videoCount: document.getElementById('video-count'),
+    soundStatus: document.getElementById('sound-status'),
+    lastModified: document.getElementById('last-modified'),
+    currentVideo: document.getElementById('current-video'),
+    videoContainer: document.getElementById('video-container')
+};
+
+// Application State
+const STATE = {
+    currentVideoIndex: -1, // Start at -1 so first video becomes index 0
+    videoList: [],
+    isPlaying: false,
+    activeVideo: null, // Will be set after DOMContentLoaded
+    inactiveVideo: null, // Will be set after DOMContentLoaded
+    infoVisible: false,
+    infoAreaVisible: false,
+    isTransitioning: false,
+    hasShownLoadingOnce: false,
+    hasShownInitialInstructions: false,
+    eventHandlersSetup: false // Track if event handlers have been set up
+};
+
+// UI Counters (for debugging/limiting notifications)
+const COUNTERS = {
+    soundToggle: 0,
+    loadingToggle: 0
+};
+
+// Timeout References
+const TIMEOUTS = {
+    notification: null,
+    deviceInfo: null
+};
 
 function updateStatus(message) {
-    console.log(message);
+    LOGGER.system(message);
 }
 
 function getTextWidth(text, font) {
@@ -44,8 +249,8 @@ function getTextWidth(text, font) {
 }
 
 function setBottomButtonWidthsToWord(word) {
-    const haBtn = document.getElementById('human-analytica-button');
-    const infoBtn = document.getElementById('next-button');
+    const haBtn = ELEMENTS.humanAnalyticaButton;
+    const infoBtn = ELEMENTS.nextButton;
     if (!haBtn || !infoBtn) return;
     const style = window.getComputedStyle(haBtn);
     const font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
@@ -60,204 +265,232 @@ function setBottomButtonWidthsToWord(word) {
     infoBtn.style.maxWidth = totalWidth + 'px';
 }
 
-function init() {
-    setBottomButtonWidthsToWord('Human Analytica');
-    try {
-        updateStatus('Checking video URLs...');
-        if (!window.VIDEO_URLS) {
-            updateStatus('ERROR: Video URLs not found');
-            return;
+// Generic button event handler to reduce code duplication
+function addButtonEventListeners(element, clickHandler, condition = null) {
+    // Click handler for desktop
+    element.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!condition || condition()) {
+            clickHandler();
         }
-        const mobile = isMobile();
-        videoList = mobile ? window.VIDEO_URLS.mobile : window.VIDEO_URLS.desktop;
-        updateStatus(`Found ${videoList.length} videos for ${mobile ? 'mobile' : 'desktop'}`);
-        if (videoList.length === 0) {
-            updateStatus('ERROR: No videos available');
-            return;
+    });
+    
+    // Touch handlers for mobile - prevent default to avoid double-firing
+    element.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+    });
+    
+    element.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!condition || condition()) {
+            clickHandler();
         }
-        shuffleArray(videoList);
-        document.getElementById('device-type').textContent = `Device: ${mobile ? 'Mobile' : 'Desktop'}`;
-        document.getElementById('video-count').textContent = `Videos: ${videoList.length}`;
-        document.getElementById('sound-status').textContent = `Sound: ${activeVideo.muted ? 'Off' : 'On'}`;
-        document.getElementById('last-modified').textContent = `Modified: 25:08:09:16:08:38`;
-        console.log(`Initialized for ${mobile ? 'mobile' : 'desktop'} with ${videoList.length} videos`);
-        console.log('Video list:', videoList.slice(0, 3));
-        loadVideo(0);
-        showInitialNotification();
-    } catch (error) {
-        console.error('Initialization error:', error);
-        updateStatus('ERROR: Initialization failed');
-    }
+    });
 }
 
-function loadNextVideo(showUI = true) {
-    if (isTransitioning) return;
-    const isUserTriggered = showUI === true;
-    soundNotification.classList.remove('show');
-    if (isUserTriggered) {
-        loadingToggleCount++;
-        console.log(`📺 Loading toggle count: ${loadingToggleCount}`);
-        if (loadingToggleCount <= 1) {
-            loading.classList.add('show');
-            console.log(`✅ Showing loading screen (toggle ${loadingToggleCount}/1)`);
-        } else {
-            console.log(`❌ Loading screen hidden (toggle ${loadingToggleCount} > 1)`);
-        }
-        // Only show bottom buttons if not in fullscreen
-        if (!document.fullscreenElement) {
-            nextButton.classList.add('show');
-            humanAnalyticaButton.classList.add('show');
-        } else {
-            nextButton.classList.remove('show');
-            humanAnalyticaButton.classList.remove('show');
-        }
-        hasShownLoadingOnce = true;
-        if (notificationTimeout) clearTimeout(notificationTimeout);
-        notificationTimeout = setTimeout(() => {
-            loading.classList.remove('show');
-            nextButton.classList.remove('show');
-            humanAnalyticaButton.classList.remove('show');
-            console.log('🔧 Backup timeout: Force hiding loading UI (double click/tap)');
-        }, 4000);
+// Centralized event handler setup
+
+// --- Modular Event Handler Setup ---
+function setupEventHandlers() {
+    // Prevent duplicate event handler setup
+    if (STATE.eventHandlersSetup) {
+        LOGGER.debug('Event handlers already set up, skipping');
+        return;
     }
-    const nextIndex = (currentVideoIndex + 1) % videoList.length;
-    console.log(`Loading next video: ${nextIndex + 1}/${videoList.length}${isUserTriggered ? ' (with UI)' : ' (silent)'}`);
-    isTransitioning = true;
-    const videoUrl = videoList[nextIndex];
-    const fileName = videoUrl.split('/').pop().split('?')[0];
-    inactiveVideo.src = videoUrl;
-    inactiveVideo.muted = activeVideo.muted;
-    inactiveVideo.load();
-    inactiveVideo.onloadeddata = () => {
-        console.log('Next video loaded, starting crossfade...');
-        inactiveVideo.play().then(() => {
-            activeVideo.style.opacity = '0';
-            inactiveVideo.style.opacity = '1';
-            setTimeout(() => {
-                activeVideo.pause();
-                activeVideo.style.opacity = '0';
-                [activeVideo, inactiveVideo] = [inactiveVideo, activeVideo];
-                activeVideo.style.opacity = '1';
-                inactiveVideo.style.opacity = '0';
-                currentVideoIndex = nextIndex;
-                document.getElementById('current-video').textContent = `Now: ${fileName}`;
-                // Do NOT hide the UI here if isUserTriggered, let the notificationTimeout handle it
-                isTransitioning = false;
-                console.log('Crossfade complete - active video opacity:', activeVideo.style.opacity, 'inactive video opacity:', inactiveVideo.style.opacity);
-            }, 800);
-        }).catch(error => {
-            console.log('Error playing next video:', error);
-            if (isUserTriggered) {
-                loading.classList.remove('show');
-                nextButton.classList.remove('show');
-                humanAnalyticaButton.classList.remove('show');
-            }
-            isTransitioning = false;
+    
+    LOGGER.debug('Setting up event handlers');
+    setupVideoContainerHandlers();
+    setupTouchHandlers();
+    setupKeyboardHandlers();
+    setupWindowHandlers();
+    setupButtonHandlers();
+    
+    STATE.eventHandlersSetup = true;
+    LOGGER.debug('Event handlers setup complete');
+}
+
+function setupWindowHandlers() {
+    // Window resize and fullscreen change handlers can go here if needed
+    // Currently the window load handler is at the bottom of the file
+}
+
+function setupButtonHandlers() {
+    // Set up click handlers for next button and human analytica button
+    if (ELEMENTS.nextButton) {
+        addButtonEventListeners(ELEMENTS.nextButton, () => {
+            LOGGER.user('Info button clicked');
+            toggleInfoArea();
         });
-    };
-    inactiveVideo.onerror = () => {
-        console.log('Error loading next video, trying another...');
-        if (isUserTriggered) {
-            loading.classList.remove('show');
-            nextButton.classList.remove('show');
-            humanAnalyticaButton.classList.remove('show');
+    }
+    
+    if (ELEMENTS.humanAnalyticaButton) {
+        addButtonEventListeners(ELEMENTS.humanAnalyticaButton, () => {
+            LOGGER.user('Human Analytica button clicked');
+            openHumanAnalytica();
+        });
+    }
+    
+    // Set up click handler for info area to close when clicked
+    if (ELEMENTS.infoArea) {
+        ELEMENTS.infoArea.addEventListener('click', (e) => {
+            if (STATE.infoAreaVisible) {
+                LOGGER.user('Info area clicked - closing');
+                toggleInfoArea();
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        });
+    }
+}
+
+function setupVideoContainerHandlers() {
+    const videoContainer = ELEMENTS.videoContainer;
+    let clickCount = 0;
+    let clickTimer = null;
+    videoContainer.addEventListener('click', (e) => {
+        // On mobile devices, skip click events to prevent duplicate with touch events
+        if (isMobile()) {
+            e.preventDefault();
+            return;
         }
-        isTransitioning = false;
-        setTimeout(() => loadNextVideo(isUserTriggered), 1000);
-    };
+        
+        if (!isMobile() && (e.ctrlKey || e.metaKey)) {
+            UIStateManager.toggleFullscreen();
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+        }
+        if (e.target.closest('#next-button') || e.target.closest('#human-analytica-button')) return;
+        clickCount++;
+        if (clickCount === 1) {
+            clickTimer = setTimeout(() => {
+                LOGGER.user('Single click detected - toggle mute');
+                VideoManager.toggleMute();
+                clickCount = 0;
+            }, CONFIG.timeouts.clickDelay);
+        } else if (clickCount === 2) {
+            clearTimeout(clickTimer);
+            LOGGER.user('Double click detected - load next video');
+            VideoManager.transitionToNext(true);
+            clickCount = 0;
+        }
+    });
+    videoContainer.addEventListener('contextmenu', (e) => e.preventDefault());
 }
 
-function shuffleArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
+function setupTouchHandlers() {
+    const videoContainer = ELEMENTS.videoContainer;
+    let tapCount = 0;
+    let tapTimer = null;
+    let touchStartTime = 0;
+    let gestureStartTime = 0;
+    let maxFingers = 0;
+    let gestureTimer = null;
+    let gestureInProgress = false;
+    videoContainer.addEventListener('touchstart', (e) => {
+        if (e.target.closest('#next-button') || e.target.closest('#human-analytica-button')) return;
+        e.preventDefault();
+        const fingers = e.touches.length;
+        if (!gestureInProgress) {
+            gestureInProgress = true;
+            gestureStartTime = Date.now();
+            maxFingers = fingers;
+            clearTimeout(gestureTimer);
+            gestureTimer = setTimeout(() => {
+                if (maxFingers >= 3) {
+                    LOGGER.user('3+ finger gesture detected');
+                    toggleDeviceInfo();
+                }
+                gestureInProgress = false;
+                maxFingers = 0;
+            }, CONFIG.timeouts.gestureDetection);
+        }
+        if (fingers > maxFingers) maxFingers = fingers;
+        touchStartTime = Date.now();
+    });
+    videoContainer.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        const fingers = e.touches.length;
+        if (fingers > maxFingers) maxFingers = fingers;
+    });
+    videoContainer.addEventListener('touchend', (e) => {
+        if (e.target.closest('#next-button') || e.target.closest('#human-analytica-button')) return;
+        e.preventDefault();
+        const currentTime = Date.now();
+        const tapDuration = currentTime - touchStartTime;
+        if (tapDuration < CONFIG.timeouts.tapDuration && e.changedTouches.length === 1) {
+            tapCount++;
+            if (tapCount === 1) {
+                tapTimer = setTimeout(() => {
+                    LOGGER.user('Single tap detected - toggle mute');
+                    VideoManager.toggleMute();
+                    tapCount = 0;
+                }, CONFIG.timeouts.clickDelay);
+            } else if (tapCount === 2) {
+                clearTimeout(tapTimer);
+                LOGGER.user('Double tap detected - load next video');
+                VideoManager.transitionToNext(true);
+                tapCount = 0;
+            }
+        }
+    });
 }
 
-function loadVideo(index) {
-    try {
-        if (index >= videoList.length) index = 0;
-        currentVideoIndex = index;
-        const videoUrl = videoList[index];
-        const fileName = videoUrl.split('/').pop().split('?')[0];
-        updateStatus(`Loading video ${index + 1}/${videoList.length}...`);
-        console.log(`Loading video ${index + 1}/${videoList.length}: ${videoUrl}`);
-        activeVideo.src = videoUrl;
-        activeVideo.load();
-        activeVideo.onloadeddata = () => {
-            console.log('Video loaded successfully');
-            document.getElementById('current-video').textContent = `Now: ${fileName}`;
-            activeVideo.play().then(() => {
-                isPlaying = true;
-                console.log('Video playing');
-            }).catch(error => {
-                console.log('Autoplay prevented:', error);
-            });
-        };
-        activeVideo.onerror = (error) => {
-            console.error('Video error:', error);
-            setTimeout(() => {
-                const nextIndex = (currentVideoIndex + 1) % videoList.length;
-                loadVideo(nextIndex);
-            }, 1000);
-        };
-        activeVideo.onended = () => {
-            loadNextVideo(false);
-        };
-    } catch (error) {
-        console.error('Error loading video:', error);
-        setTimeout(() => {
-            const nextIndex = (currentVideoIndex + 1) % videoList.length;
-            loadVideo(nextIndex);
-        }, 1000);
-    }
+function setupKeyboardHandlers() {
+    document.addEventListener('keydown', (e) => {
+        if (e.key === ' ') {
+            e.preventDefault();
+            LOGGER.user('Space key pressed - toggle mute');
+            VideoManager.toggleMute();
+        } else if (e.key === 'n' || e.key === 'N') {
+            // Add your handler for 'n' key here if needed
+        }
+    });
 }
 
 function openHumanAnalytica() {
     window.open('https://escob.art', '_self');
-    console.log('Opening escob.art website in same tab');
+    LOGGER.user('Opening escob.art website in same tab');
 }
 
 function toggleInfoArea() {
-    console.log('Info area toggle requested, current state:', infoAreaVisible);
-    if (infoAreaVisible) {
-        infoArea.classList.remove('show');
-        infoAreaVisible = false;
-        console.log('Info area hidden');
-        console.log('Bottom buttons remain hidden until next user interaction');
-    } else {
-        infoArea.classList.add('show');
-        infoAreaVisible = true;
-        nextButton.classList.remove('show');
-        humanAnalyticaButton.classList.remove('show');
-        console.log('Info area shown, bottom buttons hidden');
-    }
-}
-
-function toggleMute() {
-    loading.classList.remove('show');
-    const newMutedState = !activeVideo.muted;
-    activeVideo.muted = newMutedState;
-    inactiveVideo.muted = newMutedState;
-    if (!newMutedState && activeVideo.paused) {
-        activeVideo.load();
-        activeVideo.play().catch(error => {
-            console.log('Audio context may be suspended, trying to resume...');
-            if (window.AudioContext || window.webkitAudioContext) {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                if (window.audioContext && window.audioContext.state === 'suspended') {
-                    window.audioContext.resume();
-                }
+    LOGGER.user('Info area toggle requested, current state:', STATE.infoAreaVisible);
+    if (STATE.infoAreaVisible) {
+        ELEMENTS.infoArea.classList.remove('show');
+        STATE.infoAreaVisible = false;
+        LOGGER.ui('Info area hidden');
+        LOGGER.debug('Bottom buttons remain hidden until next user interaction');
+        
+        // Show fullscreen hint after a delay to avoid flash during closing transition
+        setTimeout(() => {
+            const fullscreenHint = document.getElementById('fullscreen-hint');
+            if (fullscreenHint && !STATE.infoAreaVisible) {
+                fullscreenHint.style.display = '';
             }
-        });
+        }, 300); // Wait for CSS transition to complete
+    } else {
+        ELEMENTS.infoArea.classList.add('show');
+        STATE.infoAreaVisible = true;
+        ELEMENTS.nextButton.classList.remove('show');
+        ELEMENTS.humanAnalyticaButton.classList.remove('show');
+        LOGGER.ui('Info area shown, bottom buttons hidden');
+        
+        // Hide fullscreen hint immediately when info area is opening
+        const fullscreenHint = document.getElementById('fullscreen-hint');
+        if (fullscreenHint) {
+            fullscreenHint.style.display = 'none';
+        }
     }
-    showSoundNotification();
-    console.log(`Audio ${newMutedState ? 'muted' : 'unmuted'}`);
 }
 
 function showInitialNotification() {
-    const text = soundNotification.querySelector('.text');
+    const text = ELEMENTS.soundNotification.querySelector('.text');
     const mobile = isMobile();
+    
+    // Set initial instruction text
     if (mobile) {
         text.innerHTML = 'One Tap<br>Sound On<br><br>Two Taps<br>Next One';
     } else {
@@ -268,249 +501,103 @@ function showInitialNotification() {
             text.innerHTML = 'One Click Sound On<br><br>Two Clicks Next One<br><br>Ctrl + Click Full Screen';
         }
     }
-    document.getElementById('sound-status').textContent = `Sound: ${activeVideo.muted ? 'Off' : 'On'}`;
-    clearTimeout(notificationTimeout);
-    if (!document.fullscreenElement) {
-        soundNotification.classList.add('show');
-        nextButton.classList.add('show');
-        humanAnalyticaButton.classList.add('show');
-    } else {
-        soundNotification.classList.remove('show');
-        nextButton.classList.remove('show');
-        humanAnalyticaButton.classList.remove('show');
-        // Prevent notificationTimeout from showing/hiding in fullscreen
-        if (notificationTimeout) clearTimeout(notificationTimeout);
-        return;
-    }
-    const hideDelay = 4000;
-    notificationTimeout = setTimeout(() => {
-        soundNotification.classList.remove('show');
-        nextButton.classList.remove('show');
-        humanAnalyticaButton.classList.remove('show');
-        hasShownInitialInstructions = true;
+    
+    // Show the notification and buttons
+    ELEMENTS.soundNotification.classList.add('show');
+    ELEMENTS.nextButton.classList.add('show');
+    ELEMENTS.humanAnalyticaButton.classList.add('show');
+    LOGGER.ui('Showing initial notification and buttons');
+    
+    // Auto-hide after a delay (longer for initial instructions)
+    const hideDelay = 4000; // 4 seconds for initial instructions
+    clearTimeout(TIMEOUTS.notification);
+    TIMEOUTS.notification = setTimeout(() => {
+        ELEMENTS.soundNotification.classList.remove('show');
+        ELEMENTS.nextButton.classList.remove('show');
+        ELEMENTS.humanAnalyticaButton.classList.remove('show');
+        LOGGER.ui('Auto-hiding initial notification');
     }, hideDelay);
 }
 
 function showSoundNotification() {
-    const text = soundNotification.querySelector('.text');
+    const text = ELEMENTS.soundNotification.querySelector('.text');
     const mobile = isMobile();
-    if (activeVideo.muted) {
+    if (STATE.activeVideo.muted) {
         text.textContent = 'Sound Off';
     } else {
         text.textContent = 'Sound On';
     }
-    document.getElementById('sound-status').textContent = `Sound: ${activeVideo.muted ? 'Off' : 'On'}`;
-    clearTimeout(notificationTimeout);
-    if (!hasShownInitialInstructions) {
-        hasShownInitialInstructions = true;
-        console.log('🔧 Early interaction detected - marking initial instructions as shown');
+    document.getElementById('sound-status').textContent = `Sound: ${STATE.activeVideo.muted ? 'Off' : 'On'}`;
+    clearTimeout(TIMEOUTS.notification);
+    if (!STATE.hasShownInitialInstructions) {
+        STATE.hasShownInitialInstructions = true;
+        LOGGER.debug('Early interaction detected - marking initial instructions as shown');
     }
-    soundToggleCount++;
-    console.log(`🔊 Sound toggle count: ${soundToggleCount}`);
-    if (soundToggleCount <= 2) {
-        soundNotification.classList.add('show');
-        console.log(`✅ Showing sound notification (toggle ${soundToggleCount}/2)`);
-    } else {
-        console.log(`❌ Sound notification hidden (toggle ${soundToggleCount} > 2)`);
-    }
-    if (!document.fullscreenElement) {
-        soundNotification.classList.add('show');
-        nextButton.classList.add('show');
-        humanAnalyticaButton.classList.add('show');
-    } else {
-        soundNotification.classList.remove('show');
-        nextButton.classList.remove('show');
-        humanAnalyticaButton.classList.remove('show');
-        if (notificationTimeout) clearTimeout(notificationTimeout);
+    COUNTERS.soundToggle++;
+    LOGGER.debug(`Sound toggle count: ${COUNTERS.soundToggle}`);
+    
+    // Don't show anything if in fullscreen
+    if (document.fullscreenElement) {
+        LOGGER.debug('In fullscreen - skipping sound notification');
         return;
     }
-// Hide sound notification immediately if entering fullscreen
-document.addEventListener('fullscreenchange', () => {
-    if (document.fullscreenElement) {
-        soundNotification.classList.remove('show');
-        nextButton.classList.remove('show');
-        humanAnalyticaButton.classList.remove('show');
-        if (notificationTimeout) clearTimeout(notificationTimeout);
+    
+    // Show sound notification based on toggle count
+    if (COUNTERS.soundToggle <= 2) {
+        ELEMENTS.soundNotification.classList.add('show');
+        LOGGER.ui(`Showing sound notification (toggle ${COUNTERS.soundToggle}/2)`);
+    } else {
+        LOGGER.debug(`Sound notification hidden (toggle ${COUNTERS.soundToggle} > 2)`);
     }
-});
-    notificationTimeout = setTimeout(() => {
-        soundNotification.classList.remove('show');
-        nextButton.classList.remove('show');
-        humanAnalyticaButton.classList.remove('show');
-    }, 4000);
+    
+    // Show buttons briefly
+    ELEMENTS.nextButton.classList.add('show');
+    ELEMENTS.humanAnalyticaButton.classList.add('show');
+    
+    TIMEOUTS.notification = setTimeout(() => {
+        ELEMENTS.soundNotification.classList.remove('show');
+        ELEMENTS.nextButton.classList.remove('show');
+        ELEMENTS.humanAnalyticaButton.classList.remove('show');
+    }, CONFIG.timeouts.ui);
 }
 
 function toggleDeviceInfo() {
-    console.log('🔧 toggleDeviceInfo() CALLED');
-    console.log('📋 Device info element exists:', !!deviceInfo);
-    console.log('📋 Current classes:', deviceInfo.className);
-    console.log('📋 Current opacity:', window.getComputedStyle(deviceInfo).opacity);
-    clearTimeout(deviceInfoTimeout);
-    console.log('⏰ Cleared existing timeout');
-    infoVisible = true;
-    deviceInfo.classList.add('show');
-    console.log('✅ Added "show" class to device info');
-    console.log('📋 New classes after show:', deviceInfo.className);
-    deviceInfo.offsetHeight;
-    console.log('🔄 Forced style recalculation');
+    LOGGER.debug('toggleDeviceInfo() CALLED');
+    LOGGER.debug('Device info element exists:', !!ELEMENTS.deviceInfo);
+    LOGGER.debug('Current classes:', ELEMENTS.deviceInfo.className);
+    LOGGER.debug('Current opacity:', window.getComputedStyle(ELEMENTS.deviceInfo).opacity);
+    clearTimeout(TIMEOUTS.deviceInfo);
+    LOGGER.debug('Cleared existing timeout');
+    STATE.infoVisible = true;
+    ELEMENTS.deviceInfo.classList.add('show');
+    LOGGER.debug('Added "show" class to device info');
+    LOGGER.debug('New classes after show:', ELEMENTS.deviceInfo.className);
+    ELEMENTS.deviceInfo.offsetHeight;
+    LOGGER.debug('Forced style recalculation');
     setTimeout(() => {
-        const computedOpacity = window.getComputedStyle(deviceInfo).opacity;
-        console.log('📋 Computed opacity after show:', computedOpacity);
+        const computedOpacity = window.getComputedStyle(ELEMENTS.deviceInfo).opacity;
+        LOGGER.debug('Computed opacity after show:', computedOpacity);
         if (computedOpacity === '0') {
-            console.log('⚠️ WARNING: Opacity is still 0 - CSS might not be applied');
+            LOGGER.warn('WARNING: Opacity is still 0 - CSS might not be applied');
         } else {
-            console.log('✅ SUCCESS: Device info should be visible');
+            LOGGER.debug('SUCCESS: Device info should be visible');
         }
-    }, 100);
-    console.log('✅ DEVICE INFO SHOWN - 3-finger gesture detected successfully!');
-    deviceInfoTimeout = setTimeout(() => {
-        infoVisible = false;
-        deviceInfo.classList.remove('show');
-        console.log('⏰ Device info auto-hidden after 4 seconds');
-    }, 4000);
+    }, CONFIG.timeouts.debugCheck);
+    LOGGER.user('DEVICE INFO SHOWN - 3-finger gesture detected successfully!');
+    TIMEOUTS.deviceInfo = setTimeout(() => {
+        STATE.infoVisible = false;
+        ELEMENTS.deviceInfo.classList.remove('show');
+        LOGGER.ui('Device info auto-hidden after 4 seconds');
+    }, CONFIG.timeouts.ui);
 }
 
 function attachVideoEventListeners() {
-    const videoContainer = document.getElementById('video-container');
-    let touchStartTime = 0;
-    let clickCount = 0;
-    let clickTimer = null;
-    videoContainer.addEventListener('click', (e) => {
-        if (!isMobile() && (e.ctrlKey || e.metaKey)) {
-            if (document.fullscreenElement) {
-                document.exitFullscreen();
-            } else {
-                videoContainer.requestFullscreen();
-            }
-            e.preventDefault();
-            e.stopPropagation();
-            return;
-        }
-    }, true);
-    let tapCount = 0;
-    let tapTimer = null;
-    let lastTapTime = 0;
-    let gestureStartTime = 0;
-    let maxFingers = 0;
-    let gestureTimer = null;
-    let gestureInProgress = false;
-    videoContainer.addEventListener('click', (e) => {
-        if (e.target.closest('#next-button') || e.target.closest('#human-analytica-button')) return;
-        clickCount++;
-        if (clickCount === 1) {
-            clickTimer = setTimeout(() => {
-                console.log('Single click detected - toggle mute');
-                toggleMute();
-                clickCount = 0;
-            }, 400);
-        } else if (clickCount === 2) {
-            clearTimeout(clickTimer);
-            console.log('Double click detected - load next video');
-            loadNextVideo();
-            clickCount = 0;
-        }
-    });
-    videoContainer.addEventListener('touchstart', (e) => {
-        if (e.target.closest('#next-button') || e.target.closest('#human-analytica-button')) return;
-        e.preventDefault();
-        const fingers = e.touches.length;
-        if (!gestureInProgress) {
-            gestureInProgress = true;
-            gestureStartTime = Date.now();
-            maxFingers = fingers;
-            console.log(`🎯 NEW GESTURE STARTED: ${fingers} finger(s)`);
-            gestureTimer = setTimeout(() => {
-                executeGesture();
-            }, 200);
-        } else {
-            if (fingers > maxFingers) {
-                maxFingers = fingers;
-                console.log(`� GESTURE UPDATED: max fingers now ${maxFingers}`);
-            }
-        }
-        console.log(`📍 Touch coordinates:`, Array.from(e.touches).map((t, i) => `F${i+1}:(${Math.round(t.clientX)}, ${Math.round(t.clientY)})`));
-    });
-    videoContainer.addEventListener('touchmove', (e) => {
-        if (e.target.closest('#next-button') || e.target.closest('#human-analytica-button')) return;
-        const fingers = e.touches.length;
-        if (gestureInProgress && fingers > maxFingers) {
-            maxFingers = fingers;
-            console.log(`🔄 GESTURE UPDATE: max fingers increased to ${maxFingers}`);
-        }
-    });
-    videoContainer.addEventListener('touchend', (e) => {
-        if (e.target.closest('#next-button') || e.target.closest('#human-analytica-button')) return;
-        const remainingTouches = e.touches.length;
-        console.log(`👆 FINGER LIFTED: ${remainingTouches} finger(s) remaining`);
-        if (remainingTouches === 0 && gestureInProgress) {
-            console.log('🏁 ALL FINGERS LIFTED - executing gesture immediately');
-            clearTimeout(gestureTimer);
-            executeGesture();
-        }
-    });
-    function executeGesture() {
-        if (!gestureInProgress) return;
-        const duration = Date.now() - gestureStartTime;
-        console.log(`🎯 EXECUTING GESTURE: ${maxFingers} max fingers (${duration}ms duration)`);
-        if (maxFingers === 1) {
-            const currentTime = Date.now();
-            if (currentTime - lastTapTime < 400) {
-                clearTimeout(tapTimer);
-                console.log('✅ DOUBLE TAP → NEXT VIDEO');
-                loadNextVideo();
-                tapCount = 0;
-            } else {
-                tapCount = 1;
-                tapTimer = setTimeout(() => {
-                    if (tapCount === 1) {
-                        console.log('✅ SINGLE TAP → TOGGLE SOUND');
-                        toggleMute();
-                    }
-                    tapCount = 0;
-                }, 400);
-            }
-            lastTapTime = currentTime;
-        } else if (maxFingers === 2) {
-            console.log('✅ 2 FINGERS → SHOW INFO AREA');
-            toggleDeviceInfo();
-        } else if (maxFingers >= 3) {
-            console.log(`✅ ${maxFingers} FINGERS → SHOW INFO AREA (multi-touch)`);
-            toggleDeviceInfo();
-        } else {
-            console.log('❌ No valid gesture detected');
-        }
-        gestureInProgress = false;
-        maxFingers = 0;
-        gestureStartTime = 0;
-    }
-    videoContainer.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-    });
+    // DEPRECATED: This function has been replaced by setupEventHandlers()
+    // Left as placeholder to avoid breaking references
+    LOGGER.warn('attachVideoEventListeners is deprecated, using setupEventHandlers instead');
 }
-document.addEventListener('keydown', (e) => {
-    switch(e.key.toLowerCase()) {
-        case ' ':
-        case 'enter':
-            e.preventDefault();
-            if (activeVideo.paused) {
-                activeVideo.play();
-            } else {
-                loadNextVideo();
-            }
-            break;
-        case 'm':
-            toggleMute();
-            break;
-        case 'i':
-            toggleDeviceInfo();
-            break;
-        case 't':
-            console.log('🧪 TEST: Manual device info toggle');
-            toggleDeviceInfo();
-            break;
-    }
-});
-attachVideoEventListeners();
+
+// setupEventHandlers() is now called only in init() to avoid duplicate event listeners
 if (!isMobile()) {
     setTimeout(() => {
         const infoArea = document.getElementById('info-area');
@@ -521,106 +608,81 @@ if (!isMobile()) {
             hint.textContent = 'Ctrl+Click for fullscreen';
             infoArea.appendChild(hint);
         }
-    }, 1000);
+    }, CONFIG.timeouts.fullscreenHint);
 }
-document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && isMobile()) {
-        console.log('Page became visible again, checking audio state...');
-        setTimeout(() => {
-            if (!activeVideo.muted && (activeVideo.paused || activeVideo.currentTime === 0)) {
-                console.log('Reloading video to restore audio context...');
-                const currentIndex = currentVideoIndex;
-                loadVideo(currentIndex);
-            }
-        }, 500);
+
+function init() {
+    LOGGER.system('Initializing application...');
+    
+    // Set up video references
+    STATE.activeVideo = ELEMENTS.video;
+    STATE.inactiveVideo = ELEMENTS.video2;
+    
+    // Ensure both videos start muted (required for autoplay)
+    STATE.activeVideo.muted = true;
+    STATE.inactiveVideo.muted = true;
+    
+    // Set up event handlers
+    setupEventHandlers();
+    
+    // Initialize video list based on device type
+    if (typeof window.VIDEO_URLS !== 'undefined') {
+        const deviceType = isMobile() ? 'mobile' : 'desktop';
+        const videoUrls = window.VIDEO_URLS[deviceType];
+        
+        if (videoUrls && videoUrls.length > 0) {
+            STATE.videoList = videoUrls;
+            LOGGER.system(`Loaded ${STATE.videoList.length} ${deviceType} videos`);
+            
+            // Load first video and show initial UI
+            VideoManager.loadNextVideo(false);
+            
+            // Show initial notification after a brief delay
+            setTimeout(() => {
+                showInitialNotification();
+            }, 1000);
+        } else {
+            LOGGER.warn(`No ${deviceType} video URLs found in window.VIDEO_URLS`);
+        }
+    } else {
+        LOGGER.warn('window.VIDEO_URLS not found, checking for legacy videoUrls');
+        if (typeof videoUrls !== 'undefined' && videoUrls.length > 0) {
+            STATE.videoList = videoUrls;
+            LOGGER.system(`Loaded ${STATE.videoList.length} videos from legacy videoUrls`);
+            VideoManager.loadNextVideo(false);
+            
+            // Show initial notification after a brief delay
+            setTimeout(() => {
+                showInitialNotification();
+            }, 1000);
+        } else {
+            LOGGER.error('No video URLs found');
+        }
     }
-});
-window.addEventListener('focus', () => {
-    if (isMobile() && !activeVideo.muted && activeVideo.paused) {
-        console.log('Window focused, attempting to resume video...');
-        activeVideo.play().catch(error => {
-            console.log('Could not resume, reloading video...');
-            loadVideo(currentVideoIndex);
-        });
-    }
-});
-window.addEventListener('resize', () => {
-    setBottomButtonWidthsToWord('Human Analytica');
-});
-humanAnalyticaButton.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (humanAnalyticaButton.classList.contains('show')) {
-        openHumanAnalytica();
-    }
-});
-humanAnalyticaButton.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-});
-humanAnalyticaButton.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (humanAnalyticaButton.classList.contains('show')) {
-        openHumanAnalytica();
-    }
-});
-nextButton.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (nextButton.classList.contains('show')) {
-        toggleInfoArea();
-    }
-});
-nextButton.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-});
-nextButton.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (nextButton.classList.contains('show')) {
-        toggleInfoArea();
-    }
-});
-infoArea.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (infoAreaVisible) {
-        toggleInfoArea();
-    }
-});
-infoArea.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-});
-infoArea.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (infoAreaVisible) {
-        toggleInfoArea();
-    }
-});
+    
+    LOGGER.system('Application initialized');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     setBottomButtonWidthsToWord('Human Analytica');
-    console.log('DOM Content Loaded, initializing...');
+    LOGGER.system('DOM Content Loaded, initializing');
     init();
 });
 window.addEventListener('load', () => {
-    console.log('Window loaded');
-    if (videoList.length === 0) {
-        console.log('Fallback initialization...');
-        setTimeout(init, 500);
+    LOGGER.system('Window loaded');
+    if (STATE.videoList.length === 0) {
+        LOGGER.warn('Fallback initialization');
+        setTimeout(init, CONFIG.timeouts.fallbackInit);
     }
 });
-console.log('Dreams and Poems - Simple Video Player Script Loaded');
+LOGGER.system('Application script loaded successfully');
 window.testDeviceInfo = function() {
-    console.log('🧪 GLOBAL TEST: Testing device info display');
+    LOGGER.debug('GLOBAL TEST: Testing device info display');
     toggleDeviceInfo();
 };
 window.testThreeFingers = function() {
-    console.log('🧪 SIMULATING 3-FINGER TOUCH');
-    console.log('📋 Device info element:', deviceInfo);
-    console.log('👀 Current classes:', deviceInfo.className);
+    LOGGER.debug('SIMULATING 3-FINGER TOUCH');
+    LOGGER.debug('Device info element:', ELEMENTS.deviceInfo);
+    LOGGER.debug('Current classes:', ELEMENTS.deviceInfo.className);
     toggleDeviceInfo();
 };

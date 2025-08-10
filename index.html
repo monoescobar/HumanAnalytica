@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Human Analytica is an AI-driven electronic art series exploring human vulnerability amid shifting power, blending classical bodies with unsettling distortions to provoke thought and discomfort">
     <title>Human Analytica</title>
-    <!-- Updated: 25:08:09:19:51:00 -->
+    <!-- Updated: 25:08:09:19:56:00 -->
     <link rel="icon" type="image/png" href="icon-192x192.png">
     <link rel="apple-touch-icon" href="icon-192x192.png">
     <style>
@@ -404,10 +404,8 @@
             
             <!-- Mobile content -->
             <div class="mobile-content">
-                <p>Human Analytica is an AI-driven electronic art series exploring human vulnerability amid shifting power dynamics.</p>
-                <p>This immersive video experience blends classical human forms with unsettling digital distortions, creating a contemplative space that provokes thought and challenges comfort zones.</p>
-                <p>Each piece in the series examines the intersection of humanity and artificial intelligence, questioning our relationship with technology and the evolving nature of human identity in the digital age.</p>
-            </div>
+                <p>Human Analytica is a multimedia art series exploring unsettling human interactions. Using AI diffusion, it merges classical figures with dreamlike dysmorphism: bodies stretch, merge, melt, capturing vulnerability and exposure. Mixing historic and modern art reveals beauty disrupted by distortions, creating ironic disturbance. The website is part of electronic art, weaving art, technology, and surveillance, inviting reflection on humanity amid power shifts where discomfort and meaning emerge</p>
+                  </div>
         </div>
         
         <div id="device-info">
@@ -713,14 +711,8 @@
                 infoAreaVisible = false;
                 console.log('Info area hidden');
                 
-                // Show bottom buttons again after a short delay
-                setTimeout(() => {
-                    if (!infoAreaVisible) { // Only show if info area is still hidden
-                        nextButton.classList.add('show');
-                        humanAnalyticaButton.classList.add('show');
-                        console.log('Bottom buttons shown again');
-                    }
-                }, 300);
+                // Don't automatically show bottom buttons - they should stay hidden until user interaction
+                console.log('Bottom buttons remain hidden until next user interaction');
             } else {
                 // Show info area
                 infoArea.classList.add('show');
@@ -771,10 +763,10 @@
             
             if (mobile) {
                 // Mobile: show tap instructions on first load
-                text.innerHTML = 'One Tap<br>Sound On<br><br>Two Taps<br>Next Dream';
+                text.innerHTML = 'One Tap<br>Sound On<br><br>Two Taps<br>Next One';
             } else {
                 // Desktop: show instructions on first load
-                text.innerHTML = 'One Click Sound On<br><br>Two Clicks Next Dream';
+                text.innerHTML = 'One Click Sound On<br><br>Two Clicks Next One';
             }
             
             // Update sound status in device info

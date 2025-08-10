@@ -10,363 +10,7 @@
     <link rel="icon" type="image/png" sizes="512x512" href="icon-512x512.png">
     <link rel="apple-touch-icon" sizes="192x192" href="icon-192x192.png">
     <link rel="apple-touch-icon" sizes="512x512" href="icon-512x512.png">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            background: #000;
-            overflow: hidden;
-            height: 100vh;
-            font-family: Arial, sans-serif;
-        }
-
-        #video-container {
-            position: relative;
-            width: 100%;
-            height: 100vh;
-        }
-
-        video, #video2 {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: opacity 0.8s ease-in-out;
-        }
-
-        #controls {
-            display: none;
-        }
-
-        #device-info {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            color: #606060;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            background: rgba(0, 0, 0, 0.35);
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 12px;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        }
-
-        #device-info.show {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        #sound-notification {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            background: rgba(0, 0, 0, 0.35);
-            color: #606060;
-            padding: 20px 30px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            min-width: 140px;
-        }
-
-        /* Mobile-specific positioning for sound notification - proportional to text */
-        @media screen and (max-width: 768px) {
-            #sound-notification {
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                z-index: 1000;
-                min-width: 140px;
-                max-width: 200px;
-                width: auto;
-                padding: 20px 30px;
-            }
-        }
-
-        #sound-notification.show {
-            opacity: 1;
-        }
-
-        #sound-notification .text {
-            color: #606060;
-            text-align: center;
-        }
-
-        #loading {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            background: rgba(0, 0, 0, 0.35);
-            color: #606060;
-            padding: 20px 30px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            min-width: 200px;
-        }
-
-        /* Mobile-specific loading screen - extend width */
-        @media screen and (max-width: 768px) {
-            #loading {
-                min-width: 280px;
-                max-width: 320px;
-                width: 80vw;
-                padding: 25px 40px;
-            }
-        }
-
-        #loading.show {
-            opacity: 1;
-        }
-
-        #next-button {
-            position: fixed;
-            bottom: env(safe-area-inset-bottom, 20px);
-            bottom: max(env(safe-area-inset-bottom), 20px);
-            right: env(safe-area-inset-right, 20px);
-            right: max(env(safe-area-inset-right), 20px);
-            color: #606060;
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            background: rgba(0, 0, 0, 0.35);
-            padding: 20px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            height: 60px;
-            cursor: pointer;
-            white-space: nowrap;
-            /* Width will be set dynamically to match Human Analytica button */
-        }
-
-        #human-analytica-button {
-            position: fixed;
-            bottom: env(safe-area-inset-bottom, 20px);
-            bottom: max(env(safe-area-inset-bottom), 20px);
-            left: env(safe-area-inset-left, 20px);
-            left: max(env(safe-area-inset-left), 20px);
-            color: #606060;
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            background: rgba(0, 0, 0, 0.35);
-            padding: 20px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            height: 60px;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-
-        /* Additional mobile browser compatibility */
-        @media screen and (max-width: 768px) {
-            #next-button {
-                bottom: max(env(safe-area-inset-bottom, 0px) + 20px, 20px);
-                right: max(env(safe-area-inset-right, 0px) + 20px, 20px);
-                z-index: 2147483647; /* Maximum z-index value */
-            }
-            
-            #human-analytica-button {
-                bottom: max(env(safe-area-inset-bottom, 0px) + 20px, 20px);
-                left: max(env(safe-area-inset-left, 0px) + 20px, 20px);
-                z-index: 2147483647; /* Maximum z-index value */
-            }
-        }
-
-        #next-button.show {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        #human-analytica-button.show {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        #next-button:hover {
-            background: rgba(0, 0, 0, 0.35);
-        }
-
-        #human-analytica-button:hover {
-            background: rgba(0, 0, 0, 0.35);
-        }
-
-        #video-container video {
-            transition: opacity 0.5s ease;
-        }
-
-        /* Info area panel */
-        #info-area {
-            position: fixed;
-            top: env(safe-area-inset-top, 20px);
-            top: max(env(safe-area-inset-top), 20px);
-            bottom: env(safe-area-inset-bottom, 20px);
-            bottom: max(env(safe-area-inset-bottom), 20px);
-            left: env(safe-area-inset-left, 20px);
-            left: max(env(safe-area-inset-left), 20px);
-            right: env(safe-area-inset-right, 20px);
-            right: max(env(safe-area-inset-right), 20px);
-            color: #606060;
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            background: rgba(0, 0, 0, 0.35);
-            border-radius: 12px;
-            font-size: 28px;
-            font-weight: 700;
-            z-index: 3000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            padding: 40px;
-            overflow-y: auto;
-            cursor: pointer;
-        }
-
-        /* Mobile-specific info area adjustments */
-        @media screen and (max-width: 768px) {
-            #info-area {
-                top: max(env(safe-area-inset-top, 0px) + 20px, 20px);
-                bottom: max(env(safe-area-inset-bottom, 0px) + 20px, 20px);
-                left: max(env(safe-area-inset-left, 0px) + 20px, 20px);
-                right: max(env(safe-area-inset-right, 0px) + 20px, 20px);
-                padding: 30px 25px;
-                color: #606060;
-                font-size: 17px;
-            }
-        }
-
-        #info-area.show {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        #info-area h2 {
-            margin-bottom: 20px;
-            color: #606060;
-            font-size: 36px;
-            font-weight: 600;
-        }
-
-        #info-area p {
-            margin-bottom: 15px;
-            line-height: 1.6;
-            color: #606060;
-        }
-
-        #info-area .close-hint {
-            position: absolute;
-            top: 20px;
-            right: 25px;
-            font-size: 14px;
-            color: #606060;
-            opacity: 0.7;
-        }
-
-        #info-area .desktop-content {
-            display: block;
-        }
-
-        #info-area .mobile-content {
-            display: none;
-        }
-
-        /* Mobile-only: Make all text 33% lighter */
-        @media screen and (max-width: 768px) {
-            #device-info {
-                color: #606060;
-            }
-            
-            #sound-notification {
-                color: #606060;
-            }
-            
-            #sound-notification .text {
-                color: #606060;
-            }
-            
-            #loading {
-                color: #606060;
-            }
-            
-            #next-button {
-                color: #606060;
-            }
-            
-            #human-analytica-button {
-                color: #606060;
-            }
-
-            #info-area h2 {
-                color: #606060;
-            }
-
-            #info-area p {
-                color: #606060;
-            }
-
-            #info-area .close-hint {
-                color: #606060;
-            }
-
-            #info-area .desktop-content {
-                display: none;
-            }
-
-            #info-area .mobile-content {
-                display: block;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div id="loading">
@@ -384,14 +28,7 @@
         <div id="next-button">
             <span class="text">Info</span>
         </div>
-        <style>
-            /* Set initial width for both buttons based on 'Human Analytica' */
-            #next-button, #human-analytica-button {
-                width: 232px; /* fallback, will be updated by JS if needed */
-                min-width: 232px;
-                max-width: 232px;
-            }
-        </style>
+    <!-- Button width CSS moved to styles.css -->
         </div>
         
         <div id="human-analytica-button">
@@ -431,167 +68,12 @@
 
     <!-- Load video URLs -->
     <script src="video-urls.js"></script>
-    
-    <script>
-        console.log('Dreams and Poems - Simple Video Player Starting...');
-        
-        // Detect device type
-        function isMobile() {
-            return window.innerWidth <= 768 || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        }
-
-        // Global variables
-        let currentVideoIndex = 0;
-        let videoList = [];
-        let isPlaying = false;
-        let video = document.getElementById('video');
-        let video2 = document.getElementById('video2');
-        let activeVideo = video;
-        let inactiveVideo = video2;
-        let deviceInfo = document.getElementById('device-info');
-        let loading = document.getElementById('loading');
-        let soundNotification = document.getElementById('sound-notification');
-        let nextButton = document.getElementById('next-button');
-        let humanAnalyticaButton = document.getElementById('human-analytica-button');
-        let infoArea = document.getElementById('info-area');
-        let notificationTimeout;
-        let deviceInfoTimeout;
-        let infoVisible = false;
-        let infoAreaVisible = false; // Track if info area is visible
-        let isTransitioning = false;
-        let hasShownLoadingOnce = false; // Track if loading screen has been shown once
-        let hasShownInitialInstructions = false; // Track if initial instructions have been shown
-        let soundToggleCount = 0; // Track number of sound toggles
-        let loadingToggleCount = 0; // Track number of loading toggles
-        
-        // LinkedIn profile URL
-        const linkedInProfile = 'https://www.linkedin.com/in/carlos-escobar-32156b24/';
-
-        // Update status
-        function updateStatus(message) {
-            console.log(message);
-        }
-
-        // Initialize the player
-        // Measure the width of a hard-coded word using canvas
-        function getTextWidth(text, font) {
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            context.font = font;
-            const metrics = context.measureText(text);
-            return metrics.width;
-        }
-
-        // Set both bottom button widths to match the word 'Human Analytica'
-        function setBottomButtonWidthsToWord(word) {
-            // Set width immediately on DOMContentLoaded for first paint
-            const haBtn = document.getElementById('human-analytica-button');
-            const infoBtn = document.getElementById('next-button');
-            if (!haBtn || !infoBtn) return;
-            const style = window.getComputedStyle(haBtn);
-            const font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
-            const textWidth = getTextWidth(word, font);
-            const padding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
-            const totalWidth = Math.ceil(textWidth + padding);
-            haBtn.style.width = totalWidth + 'px';
-            infoBtn.style.width = totalWidth + 'px';
-            haBtn.style.minWidth = totalWidth + 'px';
-            infoBtn.style.minWidth = totalWidth + 'px';
-            haBtn.style.maxWidth = totalWidth + 'px';
-            infoBtn.style.maxWidth = totalWidth + 'px';
-        }
-        function init() {
-                // Set both bottom button widths to match 'Human Analytica'
-                setBottomButtonWidthsToWord('Human Analytica');
-            try {
-                updateStatus('Checking video URLs...');
-                
-                // Check if VIDEO_URLS is available
-                if (!window.VIDEO_URLS) {
-                    updateStatus('ERROR: Video URLs not found');
-                    // No visible error message - just console log
-                    return;
-                }
-
-                // Determine device type and get appropriate video list
-                const mobile = isMobile();
-                videoList = mobile ? window.VIDEO_URLS.mobile : window.VIDEO_URLS.desktop;
-                
-                updateStatus(`Found ${videoList.length} videos for ${mobile ? 'mobile' : 'desktop'}`);
-                
-                if (videoList.length === 0) {
-                    updateStatus('ERROR: No videos available');
-                    // No visible error message - just console log
-                    return;
-                }
-                
-                // Shuffle the video list
-                shuffleArray(videoList);
-                
-                // Update device info
-                document.getElementById('device-type').textContent = `Device: ${mobile ? 'Mobile' : 'Desktop'}`;
-                document.getElementById('video-count').textContent = `Videos: ${videoList.length}`;
-                document.getElementById('sound-status').textContent = `Sound: ${activeVideo.muted ? 'Off' : 'On'}`;
-                
-                // Hard-coded timestamp - updated only when code is modified (NY Eastern Time)
-                // Auto-calculated: Unix 1754770118 → August 9, 2025 at 4:08:38 PM EDT
-                document.getElementById('last-modified').textContent = `Modified: 25:08:09:16:08:38`;
-                
-                // Removed syncButtonWidths call
-                
-                console.log(`Initialized for ${mobile ? 'mobile' : 'desktop'} with ${videoList.length} videos`);
-                console.log('Video list:', videoList.slice(0, 3)); // Show first 3 URLs
-                
-                // Load first video
-                loadVideo(0);
-                
-                // Show initial instructions for desktop, sound notification for mobile
-                showInitialNotification();
-
-            } catch (error) {
-                console.error('Initialization error:', error);
-                updateStatus('ERROR: Initialization failed');
-                // No visible error message - just console log
-            }
-        }
-
-        // Load next video with smooth crossfade transition
-        function loadNextVideo(showUI = true) {
-            if (isTransitioning) return; // Prevent multiple transitions
-            
-            // For user-triggered actions (double-click/double-tap), always show some UI
-            const isUserTriggered = showUI === true;
-            
+    <script src="main.js"></script>
             // Immediately hide sound notification
             soundNotification.classList.remove('show');
             
             // Handle user-triggered loading (double-tap/double-click)
-            if (isUserTriggered) {
-                // Increment loading toggle count
-                loadingToggleCount++;
-                console.log(`📺 Loading toggle count: ${loadingToggleCount}`);
-                
-                // Only show loading area and text for first toggle
-                if (loadingToggleCount <= 1) {
-                    loading.classList.add('show');
-                    console.log(`✅ Showing loading screen (toggle ${loadingToggleCount}/1)`);
-                } else {
-                    console.log(`❌ Loading screen hidden (toggle ${loadingToggleCount} > 1)`);
-                }
-                
-                // Always show bottom buttons when user triggers loading (double-tap/double-click)
-                nextButton.classList.add('show');
-                humanAnalyticaButton.classList.add('show');
-                hasShownLoadingOnce = true; // Mark that we've shown it once
-                
-                // Force hide loading and buttons after 3 seconds as backup
-                setTimeout(() => {
-                    loading.classList.remove('show');
-                    nextButton.classList.remove('show');
-                    humanAnalyticaButton.classList.remove('show');
-                    console.log('🔧 Backup timeout: Force hiding loading UI');
-                }, 3000);
-            }
+            // ...handled in main.js...
             
             const nextIndex = (currentVideoIndex + 1) % videoList.length;
             console.log(`Loading next video: ${nextIndex + 1}/${videoList.length}${isUserTriggered ? ' (with UI)' : ' (silent)'}`);
@@ -799,22 +281,27 @@
                 text.innerHTML = 'One Tap<br>Sound On<br><br>Two Taps<br>Next One';
             } else {
                 // Desktop: show instructions on first load
-                text.innerHTML = 'One Click Sound On<br><br>Two Clicks Next One';
+                const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+                if (isMac) {
+                    text.innerHTML = 'One Click Sound On<br><br>Two Clicks Next One<br><br>Cmd + Click Full Screen';
+                } else {
+                    text.innerHTML = 'One Click Sound On<br><br>Two Clicks Next One<br><br>Ctrl + Click Full Screen';
+                }
             }
             
             // Update sound status in device info
             document.getElementById('sound-status').textContent = `Sound: ${activeVideo.muted ? 'Off' : 'On'}`;
             
             // Clear existing timeout
-            clearTimeout(notificationTimeout);
+            if (notificationTimeout) clearTimeout(notificationTimeout);
             
             // Show sound notification and buttons
             soundNotification.classList.add('show');
             nextButton.classList.add('show');
             humanAnalyticaButton.classList.add('show');
             
-            // Hide after 3 seconds (longer for instructions)
-            const hideDelay = mobile ? 2000 : 3000;
+            // Hide after 4 seconds (longer for instructions)
+            const hideDelay = 4000;
             notificationTimeout = setTimeout(() => {
                 soundNotification.classList.remove('show');
                 nextButton.classList.remove('show');
@@ -839,7 +326,7 @@
             document.getElementById('sound-status').textContent = `Sound: ${activeVideo.muted ? 'Off' : 'On'}`;
             
             // Clear existing timeout (including initial notification timeout)
-            clearTimeout(notificationTimeout);
+            if (notificationTimeout) clearTimeout(notificationTimeout);
             
             // Mark initial instructions as shown when user interacts (fixes early click glitch)
             if (!hasShownInitialInstructions) {
@@ -863,12 +350,12 @@
             nextButton.classList.add('show');
             humanAnalyticaButton.classList.add('show');
             
-            // Hide after 2 seconds
+            // Hide after 4 seconds
             notificationTimeout = setTimeout(() => {
                 soundNotification.classList.remove('show');
                 nextButton.classList.remove('show');
                 humanAnalyticaButton.classList.remove('show');
-            }, 2000);
+            }, 4000);
         }
 
         // Toggle device info visibility with enhanced debugging
@@ -879,7 +366,7 @@
             console.log('📋 Current opacity:', window.getComputedStyle(deviceInfo).opacity);
             
             // Clear any existing timeout
-            clearTimeout(deviceInfoTimeout);
+            if (deviceInfoTimeout) clearTimeout(deviceInfoTimeout);
             console.log('⏰ Cleared existing timeout');
             
             // Always show the info when toggled
@@ -905,19 +392,34 @@
             
             console.log('✅ DEVICE INFO SHOWN - 3-finger gesture detected successfully!');
             
-            // Hide device info after 3 seconds
+            // Hide device info after 4 seconds
             deviceInfoTimeout = setTimeout(() => {
                 infoVisible = false;
                 deviceInfo.classList.remove('show');
-                console.log('⏰ Device info auto-hidden after 3 seconds');
-            }, 3000);
+                console.log('⏰ Device info auto-hidden after 4 seconds');
+            }, 4000);
         }
 
         // Attach event listeners to video container
         function attachVideoEventListeners() {
+            const videoContainer = document.getElementById('video-container');
             let touchStartTime = 0;
             let clickCount = 0;
             let clickTimer = null;
+            // Desktop-only: Ctrl+Click for fullscreen
+            videoContainer.addEventListener('click', (e) => {
+                if (!isMobile() && (e.ctrlKey || e.metaKey)) {
+                    // Trigger on Ctrl (Windows/Linux) or Command (Mac)
+                    if (document.fullscreenElement) {
+                        document.exitFullscreen();
+                    } else {
+                        videoContainer.requestFullscreen();
+                    }
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
+            }, true); // Use capture to run before other click logic
             
             // Mobile tap detection variables
             let tapCount = 0;
@@ -930,7 +432,7 @@
             let gestureTimer = null;
             let gestureInProgress = false;
             
-            const videoContainer = document.getElementById('video-container');
+            // (removed duplicate declaration)
             
             // Handle mouse clicks (desktop)
             videoContainer.addEventListener('click', (e) => {
@@ -1098,6 +600,19 @@
 
         // Click/touch anywhere on video to toggle sound
         attachVideoEventListeners();
+        // Desktop: Show hint for Ctrl+Click fullscreen
+        if (!isMobile()) {
+            setTimeout(() => {
+                const infoArea = document.getElementById('info-area');
+                if (infoArea && !document.getElementById('fullscreen-hint')) {
+                    let hint = document.createElement('div');
+                    hint.className = 'close-hint';
+                    hint.id = 'fullscreen-hint';
+                    hint.textContent = 'Ctrl+Click for fullscreen';
+                    infoArea.appendChild(hint);
+                }
+            }, 1000);
+        }
 
         // Handle page visibility changes (when returning from LinkedIn app)
         document.addEventListener('visibilitychange', () => {

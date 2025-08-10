@@ -103,10 +103,15 @@ function loadNextVideo(showUI = true) {
         } else {
             console.log(`❌ Loading screen hidden (toggle ${loadingToggleCount} > 1)`);
         }
-        nextButton.classList.add('show');
-        humanAnalyticaButton.classList.add('show');
+        // Only show bottom buttons if not in fullscreen
+        if (!document.fullscreenElement) {
+            nextButton.classList.add('show');
+            humanAnalyticaButton.classList.add('show');
+        } else {
+            nextButton.classList.remove('show');
+            humanAnalyticaButton.classList.remove('show');
+        }
         hasShownLoadingOnce = true;
-        // Always clear and reset notificationTimeout for double click/tap UI
         if (notificationTimeout) clearTimeout(notificationTimeout);
         notificationTimeout = setTimeout(() => {
             loading.classList.remove('show');
@@ -265,9 +270,18 @@ function showInitialNotification() {
     }
     document.getElementById('sound-status').textContent = `Sound: ${activeVideo.muted ? 'Off' : 'On'}`;
     clearTimeout(notificationTimeout);
-    soundNotification.classList.add('show');
-    nextButton.classList.add('show');
-    humanAnalyticaButton.classList.add('show');
+    if (!document.fullscreenElement) {
+        soundNotification.classList.add('show');
+        nextButton.classList.add('show');
+        humanAnalyticaButton.classList.add('show');
+    } else {
+        soundNotification.classList.remove('show');
+        nextButton.classList.remove('show');
+        humanAnalyticaButton.classList.remove('show');
+        // Prevent notificationTimeout from showing/hiding in fullscreen
+        if (notificationTimeout) clearTimeout(notificationTimeout);
+        return;
+    }
     const hideDelay = 4000;
     notificationTimeout = setTimeout(() => {
         soundNotification.classList.remove('show');
@@ -299,8 +313,26 @@ function showSoundNotification() {
     } else {
         console.log(`❌ Sound notification hidden (toggle ${soundToggleCount} > 2)`);
     }
-    nextButton.classList.add('show');
-    humanAnalyticaButton.classList.add('show');
+    if (!document.fullscreenElement) {
+        soundNotification.classList.add('show');
+        nextButton.classList.add('show');
+        humanAnalyticaButton.classList.add('show');
+    } else {
+        soundNotification.classList.remove('show');
+        nextButton.classList.remove('show');
+        humanAnalyticaButton.classList.remove('show');
+        if (notificationTimeout) clearTimeout(notificationTimeout);
+        return;
+    }
+// Hide sound notification immediately if entering fullscreen
+document.addEventListener('fullscreenchange', () => {
+    if (document.fullscreenElement) {
+        soundNotification.classList.remove('show');
+        nextButton.classList.remove('show');
+        humanAnalyticaButton.classList.remove('show');
+        if (notificationTimeout) clearTimeout(notificationTimeout);
+    }
+});
     notificationTimeout = setTimeout(() => {
         soundNotification.classList.remove('show');
         nextButton.classList.remove('show');

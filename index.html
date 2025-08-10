@@ -48,10 +48,10 @@
             position: absolute;
             top: 20px;
             right: 20px;
-            color: #888;
+            color: #606060;
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.35);
             padding: 10px;
             border-radius: 5px;
             font-size: 12px;
@@ -73,8 +73,8 @@
             transform: translate(-50%, -50%);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
-            background: rgba(255, 255, 255, 0.15);
-            color: #888;
+            background: rgba(0, 0, 0, 0.35);
+            color: #606060;
             padding: 20px 30px;
             border-radius: 12px;
             font-size: 16px;
@@ -110,7 +110,7 @@
         }
 
         #sound-notification .text {
-            color: #888;
+            color: #606060;
             text-align: center;
         }
 
@@ -121,8 +121,8 @@
             transform: translate(-50%, -50%);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
-            background: rgba(255, 255, 255, 0.15);
-            color: #888;
+            background: rgba(0, 0, 0, 0.35);
+            color: #606060;
             padding: 20px 30px;
             border-radius: 12px;
             font-size: 16px;
@@ -158,10 +158,10 @@
             bottom: max(env(safe-area-inset-bottom), 20px);
             right: env(safe-area-inset-right, 20px);
             right: max(env(safe-area-inset-right), 20px);
-            color: #888;
+            color: #606060;
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(0, 0, 0, 0.35);
             padding: 20px;
             border-radius: 12px;
             font-size: 16px;
@@ -186,10 +186,10 @@
             bottom: max(env(safe-area-inset-bottom), 20px);
             left: env(safe-area-inset-left, 20px);
             left: max(env(safe-area-inset-left), 20px);
-            color: #888;
+            color: #606060;
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(0, 0, 0, 0.35);
             padding: 20px;
             border-radius: 12px;
             font-size: 16px;
@@ -233,11 +233,11 @@
         }
 
         #next-button:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.35);
         }
 
         #human-analytica-button:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.35);
         }
 
         #video-container video {
@@ -255,13 +255,13 @@
             left: max(env(safe-area-inset-left), 20px);
             right: env(safe-area-inset-right, 20px);
             right: max(env(safe-area-inset-right), 20px);
-            color: #888;
+            color: #606060;
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(0, 0, 0, 0.35);
             border-radius: 12px;
-            font-size: 16px;
-            font-weight: 500;
+            font-size: 28px;
+            font-weight: 700;
             z-index: 3000;
             opacity: 0;
             pointer-events: none;
@@ -280,7 +280,8 @@
                 left: max(env(safe-area-inset-left, 0px) + 20px, 20px);
                 right: max(env(safe-area-inset-right, 0px) + 20px, 20px);
                 padding: 30px 25px;
-                color: #AFAFAF;
+                color: #606060;
+                font-size: 17px;
             }
         }
 
@@ -291,15 +292,15 @@
 
         #info-area h2 {
             margin-bottom: 20px;
-            color: #aaa;
-            font-size: 24px;
+            color: #606060;
+            font-size: 36px;
             font-weight: 600;
         }
 
         #info-area p {
             margin-bottom: 15px;
             line-height: 1.6;
-            color: #888;
+            color: #606060;
         }
 
         #info-area .close-hint {
@@ -307,7 +308,7 @@
             top: 20px;
             right: 25px;
             font-size: 14px;
-            color: #666;
+            color: #606060;
             opacity: 0.7;
         }
 
@@ -322,39 +323,39 @@
         /* Mobile-only: Make all text 33% lighter */
         @media screen and (max-width: 768px) {
             #device-info {
-                color: #AFAFAF;
+                color: #606060;
             }
             
             #sound-notification {
-                color: #AFAFAF;
+                color: #606060;
             }
             
             #sound-notification .text {
-                color: #AFAFAF;
+                color: #606060;
             }
             
             #loading {
-                color: #AFAFAF;
+                color: #606060;
             }
             
             #next-button {
-                color: #AFAFAF;
+                color: #606060;
             }
             
             #human-analytica-button {
-                color: #AFAFAF;
+                color: #606060;
             }
 
             #info-area h2 {
-                color: #BBBBBB;
+                color: #606060;
             }
 
             #info-area p {
-                color: #AFAFAF;
+                color: #606060;
             }
 
             #info-area .close-hint {
-                color: #888;
+                color: #606060;
             }
 
             #info-area .desktop-content {
@@ -382,6 +383,15 @@
 
         <div id="next-button">
             <span class="text">Info</span>
+        </div>
+        <style>
+            /* Set initial width for both buttons based on 'Human Analytica' */
+            #next-button, #human-analytica-button {
+                width: 232px; /* fallback, will be updated by JS if needed */
+                min-width: 232px;
+                max-width: 232px;
+            }
+        </style>
         </div>
         
         <div id="human-analytica-button">
@@ -463,7 +473,36 @@
         }
 
         // Initialize the player
+        // Measure the width of a hard-coded word using canvas
+        function getTextWidth(text, font) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            context.font = font;
+            const metrics = context.measureText(text);
+            return metrics.width;
+        }
+
+        // Set both bottom button widths to match the word 'Human Analytica'
+        function setBottomButtonWidthsToWord(word) {
+            // Set width immediately on DOMContentLoaded for first paint
+            const haBtn = document.getElementById('human-analytica-button');
+            const infoBtn = document.getElementById('next-button');
+            if (!haBtn || !infoBtn) return;
+            const style = window.getComputedStyle(haBtn);
+            const font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+            const textWidth = getTextWidth(word, font);
+            const padding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+            const totalWidth = Math.ceil(textWidth + padding);
+            haBtn.style.width = totalWidth + 'px';
+            infoBtn.style.width = totalWidth + 'px';
+            haBtn.style.minWidth = totalWidth + 'px';
+            infoBtn.style.minWidth = totalWidth + 'px';
+            haBtn.style.maxWidth = totalWidth + 'px';
+            infoBtn.style.maxWidth = totalWidth + 'px';
+        }
         function init() {
+                // Set both bottom button widths to match 'Human Analytica'
+                setBottomButtonWidthsToWord('Human Analytica');
             try {
                 updateStatus('Checking video URLs...');
                 
@@ -498,8 +537,7 @@
                 // Auto-calculated: Unix 1754770118 → August 9, 2025 at 4:08:38 PM EDT
                 document.getElementById('last-modified').textContent = `Modified: 25:08:09:16:08:38`;
                 
-                // Sync button widths - make Info button match Human Analytica width
-                syncButtonWidths();
+                // Removed syncButtonWidths call
                 
                 console.log(`Initialized for ${mobile ? 'mobile' : 'desktop'} with ${videoList.length} videos`);
                 console.log('Video list:', videoList.slice(0, 3)); // Show first 3 URLs
@@ -688,14 +726,7 @@
         }
 
         // Sync button widths - make Info button match Human Analytica width
-        function syncButtonWidths() {
-            // Wait for elements to be rendered
-            setTimeout(() => {
-                const humanAnalyticaWidth = humanAnalyticaButton.offsetWidth;
-                nextButton.style.width = humanAnalyticaWidth + 'px';
-                console.log(`✅ Synced button widths: Info button width set to ${humanAnalyticaWidth}px to match Human Analytica`);
-            }, 100);
-        }
+    // Removed syncButtonWidths logic so Info button keeps its own width
 
         // Open Human Analytica website
         function openHumanAnalytica() {
@@ -1096,8 +1127,9 @@
 
         // Handle window resize to re-sync button widths
         window.addEventListener('resize', () => {
-            syncButtonWidths();
+            setBottomButtonWidthsToWord('Human Analytica');
         });
+    // Removed syncButtonWidths call on resize
 
         // Human Analytica button click handler (opens Human Analytica website)
         humanAnalyticaButton.addEventListener('click', (e) => {
@@ -1169,6 +1201,8 @@
 
         // Initialize when page loads
         document.addEventListener('DOMContentLoaded', () => {
+            // Set button widths immediately to prevent jumping
+            setBottomButtonWidthsToWord('Human Analytica');
             console.log('DOM Content Loaded, initializing...');
             init();
         });

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Human Analytica is an AI-driven electronic art series exploring human vulnerability amid shifting power, blending classical bodies with unsettling distortions to provoke thought and discomfort">
     <title>Human Analytica</title>
-    <!-- Updated: 25:08:09:16:08:38 -->
+    <!-- Updated: 25:08:09:19:51:00 -->
     <link rel="icon" type="image/png" href="icon-192x192.png">
     <link rel="apple-touch-icon" href="icon-192x192.png">
     <style>
@@ -242,6 +242,81 @@
             transition: opacity 0.5s ease;
         }
 
+        /* Info area panel */
+        #info-area {
+            position: fixed;
+            top: env(safe-area-inset-top, 20px);
+            top: max(env(safe-area-inset-top), 20px);
+            bottom: env(safe-area-inset-bottom, 20px);
+            bottom: max(env(safe-area-inset-bottom), 20px);
+            left: env(safe-area-inset-left, 20px);
+            left: max(env(safe-area-inset-left), 20px);
+            right: env(safe-area-inset-right, 20px);
+            right: max(env(safe-area-inset-right), 20px);
+            color: #888;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            z-index: 3000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            overflow-y: auto;
+            cursor: pointer;
+        }
+
+        /* Mobile-specific info area adjustments */
+        @media screen and (max-width: 768px) {
+            #info-area {
+                top: max(env(safe-area-inset-top, 0px) + 20px, 20px);
+                bottom: max(env(safe-area-inset-bottom, 0px) + 20px, 20px);
+                left: max(env(safe-area-inset-left, 0px) + 20px, 20px);
+                right: max(env(safe-area-inset-right, 0px) + 20px, 20px);
+                padding: 30px 25px;
+                color: #AFAFAF;
+            }
+        }
+
+        #info-area.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #info-area h2 {
+            margin-bottom: 20px;
+            color: #aaa;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        #info-area p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+            color: #888;
+        }
+
+        #info-area .close-hint {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            font-size: 14px;
+            color: #666;
+            opacity: 0.7;
+        }
+
+        #info-area .desktop-content {
+            display: block;
+        }
+
+        #info-area .mobile-content {
+            display: none;
+        }
+
         /* Mobile-only: Make all text 33% lighter */
         @media screen and (max-width: 768px) {
             #device-info {
@@ -267,6 +342,26 @@
             #human-analytica-button {
                 color: #AFAFAF;
             }
+
+            #info-area h2 {
+                color: #BBBBBB;
+            }
+
+            #info-area p {
+                color: #AFAFAF;
+            }
+
+            #info-area .close-hint {
+                color: #888;
+            }
+
+            #info-area .desktop-content {
+                display: none;
+            }
+
+            #info-area .mobile-content {
+                display: block;
+            }
         }
     </style>
 </head>
@@ -289,6 +384,30 @@
         
         <div id="human-analytica-button">
             <span class="text">escob.art</span>
+        </div>
+        
+        <div id="info-area">
+            <h2>Human Analytica</h2>
+            
+            <!-- Desktop content -->
+            <div class="desktop-content">
+
+                <p>Human Analytica is a multimedia art series exploring the subtle, yet deeply unsettling dynamics of human interaction in our current era Using advanced AI diffusion techniques, each piece merges classical body figures and historic art poses with dreamlike dysmorphism: bodies stretch, merge, melt, and intertwine, capturing both vulnerability and exposure.
+</p>
+                <p>A deliberate mix of artistic references—from historic masterpieces to modern motifs—serves to amplify the sense of beauty disrupted by overt distortions. In this tension lies an ironic disturbance: viewers may grasp a sense of aesthetic discomfort instantly or uncover further unease on closer inspection. This interplay between elegance and abnormality is at the heart of the series’ critique.
+</p>
+                <p>Human Analytica exists not only as a sequence of digital artworks, but as an electronic art experience—the website itself forms part of the artwork. Every interaction, including this text and the “info” button, is woven into the overall concept: an immersive space where art, technology, and the theme of surveillance converge.
+</p>
+                <p>If you seek to understand, reflect, or reimagine the state of our humanity in times of power shifts and unsettling connection, allow yourself to linger. Discomfort may surface quickly, but meaning emerges gradually—through the interplay of form, distortion, and digital presence.
+</p>
+            </div>
+            
+            <!-- Mobile content -->
+            <div class="mobile-content">
+                <p>Human Analytica is an AI-driven electronic art series exploring human vulnerability amid shifting power dynamics.</p>
+                <p>This immersive video experience blends classical human forms with unsettling digital distortions, creating a contemplative space that provokes thought and challenges comfort zones.</p>
+                <p>Each piece in the series examines the intersection of humanity and artificial intelligence, questioning our relationship with technology and the evolving nature of human identity in the digital age.</p>
+            </div>
         </div>
         
         <div id="device-info">
@@ -324,9 +443,11 @@
         let soundNotification = document.getElementById('sound-notification');
         let nextButton = document.getElementById('next-button');
         let humanAnalyticaButton = document.getElementById('human-analytica-button');
+        let infoArea = document.getElementById('info-area');
         let notificationTimeout;
         let deviceInfoTimeout;
         let infoVisible = false;
+        let infoAreaVisible = false; // Track if info area is visible
         let isTransitioning = false;
         let hasShownLoadingOnce = false; // Track if loading screen has been shown once
         let hasShownInitialInstructions = false; // Track if initial instructions have been shown
@@ -581,34 +702,35 @@
             window.open('https://escob.art', '_self');
             console.log('Opening escob.art website in same tab');
         }
-        function openLinkedIn() {
-            const mobile = isMobile();
+        
+        // Toggle info area visibility
+        function toggleInfoArea() {
+            console.log('Info area toggle requested, current state:', infoAreaVisible);
             
-            if (mobile) {
-                // Try to open LinkedIn app first, fallback to browser
-                const linkedInApp = 'linkedin://profile/carlos-escobar-32156b24';
-                const linkedInWeb = linkedInProfile;
+            if (infoAreaVisible) {
+                // Hide info area
+                infoArea.classList.remove('show');
+                infoAreaVisible = false;
+                console.log('Info area hidden');
                 
-                // Create a temporary link to test app opening
-                const tempLink = document.createElement('a');
-                tempLink.href = linkedInApp;
-                tempLink.style.display = 'none';
-                document.body.appendChild(tempLink);
-                
-                // Try to open the app
-                tempLink.click();
-                
-                // Fallback to web version after a short delay if app doesn't open
+                // Show bottom buttons again after a short delay
                 setTimeout(() => {
-                    window.open(linkedInWeb, '_blank');
-                    document.body.removeChild(tempLink);
-                }, 500);
-                
-                console.log('Attempting to open LinkedIn app, fallback to web');
+                    if (!infoAreaVisible) { // Only show if info area is still hidden
+                        nextButton.classList.add('show');
+                        humanAnalyticaButton.classList.add('show');
+                        console.log('Bottom buttons shown again');
+                    }
+                }, 300);
             } else {
-                // Desktop - open in new tab
-                window.open(linkedInProfile, '_blank');
-                console.log('Opening LinkedIn profile in new tab');
+                // Show info area
+                infoArea.classList.add('show');
+                infoAreaVisible = true;
+                
+                // Hide bottom buttons when info area is shown
+                nextButton.classList.remove('show');
+                humanAnalyticaButton.classList.remove('show');
+                
+                console.log('Info area shown, bottom buttons hidden');
             }
         }
 
@@ -1006,12 +1128,12 @@
             }
         });
 
-        // INFO button click handler (opens LinkedIn)
+        // INFO button click handler (toggles info area)
         nextButton.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             if (nextButton.classList.contains('show')) {
-                openLinkedIn();
+                toggleInfoArea();
             }
         });
 
@@ -1025,7 +1147,29 @@
             e.preventDefault();
             e.stopPropagation();
             if (nextButton.classList.contains('show')) {
-                openLinkedIn();
+                toggleInfoArea();
+            }
+        });
+
+        // Info area click/touch handlers (close when clicked/tapped)
+        infoArea.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (infoAreaVisible) {
+                toggleInfoArea();
+            }
+        });
+
+        infoArea.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+
+        infoArea.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (infoAreaVisible) {
+                toggleInfoArea();
             }
         });
 

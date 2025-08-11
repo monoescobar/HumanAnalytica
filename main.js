@@ -63,8 +63,8 @@ VideoManager.loadNextVideo = function(showUI = true) {
         }, CONFIG.timeouts.ui);
     }
     
-    const nextIndex = (STATE.currentVideoIndex + 1) % STATE.videoList.length;
-    LOGGER.video(`Loading next video: ${nextIndex + 1}/${STATE.videoList.length}${isUserTriggered ? ' (with UI)' : ' (silent)'}`);
+    const nextIndex = Math.floor(Math.random() * STATE.videoList.length);
+    LOGGER.video(`Loading random video: ${nextIndex + 1}/${STATE.videoList.length}${isUserTriggered ? ' (with UI)' : ' (silent)'}`);
     STATE.isTransitioning = true;
     const videoUrl = STATE.videoList[nextIndex];
     const fileName = videoUrl.split('/').pop().split('?')[0];
@@ -95,12 +95,15 @@ VideoManager.loadNextVideo = function(showUI = true) {
             STATE.currentVideoIndex = nextIndex;
             STATE.isTransitioning = false;
             
-            LOGGER.video(`Video ${nextIndex + 1} loaded and playing: ${fileName}`);
+            LOGGER.video(`Random video ${nextIndex + 1} loaded and playing: ${fileName}`);
             
-            // Update UI elements only if this is the first video or user triggered
-            if (STATE.currentVideoIndex === 0 || isUserTriggered) {
+            // Update UI elements only if this is the first load or user triggered
+            if (STATE.videoLoadCount === 0 || isUserTriggered) {
                 updateNotificationText();
             }
+            
+            // Increment video load counter
+            STATE.videoLoadCount = (STATE.videoLoadCount || 0) + 1;
         }).catch(error => {
             LOGGER.error('Error playing video:', error);
             STATE.isTransitioning = false;
@@ -211,8 +214,9 @@ const ELEMENTS = {
 
 // Application State
 const STATE = {
-    currentVideoIndex: -1, // Start at -1 so first video becomes index 0
+    currentVideoIndex: -1, // Will track the last played video index
     videoList: [],
+    videoLoadCount: 0, // Track how many videos have been loaded
     isPlaying: false,
     activeVideo: null, // Will be set after DOMContentLoaded
     inactiveVideo: null, // Will be set after DOMContentLoaded

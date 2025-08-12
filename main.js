@@ -3,7 +3,7 @@
 // Configuration object for timeouts and settings
 const CONFIG = {
     timeouts: {
-        ui: 3000,
+        ui: 4000,
         clickDelay: 300,
         tapDuration: 200,
         gestureDetection: 500,
@@ -63,10 +63,25 @@ VideoManager.loadNextVideo = function(showUI = true) {
         }, CONFIG.timeouts.ui);
     }
     
-    const nextIndex = Math.floor(Math.random() * STATE.videoList.length);
-    LOGGER.video(`Loading random video: ${nextIndex + 1}/${STATE.videoList.length}${isUserTriggered ? ' (with UI)' : ' (silent)'}`);
+    // 🎲 VIDEO SELECTION WITH LOCALSTORAGE STRATEGY
+    let selectedIndex;
+    let logMessage;
+    
+    // Check if this is the first video load and we have a specific start video
+    if (STATE.videoLoadCount === 0 && window.VIDEO_URLS.strategy === 'lastFirst' && window.VIDEO_URLS.startVideo) {
+        // Use the specific start video (highest numbered video)
+        selectedIndex = window.VIDEO_URLS.startVideo - 1; // Convert to 0-based index
+        logMessage = `Loading LAST video (new content): ${selectedIndex + 1}/${STATE.videoList.length}${isUserTriggered ? ' (with UI)' : ' (silent)'}`;
+        LOGGER.video(`🆕 NEW CONTENT DETECTED - Starting with highest video #${window.VIDEO_URLS.startVideo}`);
+    } else {
+        // Always random for all other cases
+        selectedIndex = Math.floor(Math.random() * STATE.videoList.length);
+        logMessage = `Loading random video: ${selectedIndex + 1}/${STATE.videoList.length}${isUserTriggered ? ' (with UI)' : ' (silent)'}`;
+    }
+    
+    LOGGER.video(logMessage);
     STATE.isTransitioning = true;
-    const videoUrl = STATE.videoList[nextIndex];
+    const videoUrl = STATE.videoList[selectedIndex];
     const fileName = videoUrl.split('/').pop().split('?')[0];
     
     // Load the video in the inactive video element
@@ -91,19 +106,17 @@ VideoManager.loadNextVideo = function(showUI = true) {
             STATE.activeVideo = STATE.inactiveVideo;
             STATE.inactiveVideo = temp;
             
-            // Update the index
-            STATE.currentVideoIndex = nextIndex;
+            // Update the index and increment load counter
+            STATE.currentVideoIndex = selectedIndex;
+            STATE.videoLoadCount++; // Increment load counter
             STATE.isTransitioning = false;
             
-            LOGGER.video(`Random video ${nextIndex + 1} loaded and playing: ${fileName}`);
+            LOGGER.video(`Video ${selectedIndex + 1} loaded and playing: ${fileName}`);
             
-            // Update UI elements only if this is the first load or user triggered
-            if (STATE.videoLoadCount === 0 || isUserTriggered) {
+            // Update UI elements only if this is the first video or user triggered
+            if (STATE.videoLoadCount === 1 || isUserTriggered) {
                 updateNotificationText();
             }
-            
-            // Increment video load counter
-            STATE.videoLoadCount = (STATE.videoLoadCount || 0) + 1;
         }).catch(error => {
             LOGGER.error('Error playing video:', error);
             STATE.isTransitioning = false;
@@ -134,6 +147,12 @@ function updateNotificationText() {
             text.innerHTML = 'One Click Sound On<br><br>Two Clicks Next One<br><br>Ctrl + Click Full Screen';
         }
     }
+    
+    // Update device info content as well
+    if (STATE.infoVisible) {
+        updateDeviceInfoContent();
+    }
+    
     document.getElementById('sound-status').textContent = `Sound: ${STATE.activeVideo && STATE.activeVideo.muted ? 'Off' : 'On'}`;
 }
 
@@ -179,6 +198,7 @@ VideoManager.toggleMute = function() {
 };
 
 VideoManager.transitionToNext = function(showUI = true) {
+    LOGGER.user('User requested random video transition');
     VideoManager.loadNextVideo(showUI);
 };
 
@@ -209,14 +229,16 @@ const ELEMENTS = {
     soundStatus: document.getElementById('sound-status'),
     lastModified: document.getElementById('last-modified'),
     currentVideo: document.getElementById('current-video'),
-    videoContainer: document.getElementById('video-container')
+    videoContainer: document.getElementById('video-container'),
+    // New elements for device info area
+    deviceCount: document.getElementById('device-count'),
+    storageKey: document.getElementById('storage-key')
 };
 
 // Application State
 const STATE = {
-    currentVideoIndex: -1, // Will track the last played video index
+    currentVideoIndex: -1, // Start at -1 so first video becomes index 0
     videoList: [],
-    videoLoadCount: 0, // Track how many videos have been loaded
     isPlaying: false,
     activeVideo: null, // Will be set after DOMContentLoaded
     inactiveVideo: null, // Will be set after DOMContentLoaded
@@ -225,7 +247,8 @@ const STATE = {
     isTransitioning: false,
     hasShownLoadingOnce: false,
     hasShownInitialInstructions: false,
-    eventHandlersSetup: false // Track if event handlers have been set up
+    eventHandlersSetup: false, // Track if event handlers have been set up
+    videoLoadCount: 0 // Track how many videos have been loaded (for first video detection)
 };
 
 // UI Counters (for debugging/limiting notifications)
@@ -394,11 +417,16 @@ function setupTouchHandlers() {
     let maxFingers = 0;
     let gestureTimer = null;
     let gestureInProgress = false;
+    let multiFingerGesture = false; // Track if this was a multi-finger gesture
+    
     videoContainer.addEventListener('touchstart', (e) => {
         if (e.target.closest('#next-button') || e.target.closest('#human-analytica-button')) return;
         e.preventDefault();
         const fingers = e.touches.length;
+        
+        // Reset multi-finger flag at start of new gesture
         if (!gestureInProgress) {
+            multiFingerGesture = false;
             gestureInProgress = true;
             gestureStartTime = Date.now();
             maxFingers = fingers;
@@ -406,23 +434,41 @@ function setupTouchHandlers() {
             gestureTimer = setTimeout(() => {
                 if (maxFingers >= 3) {
                     LOGGER.user('3+ finger gesture detected');
+                    multiFingerGesture = true; // Mark as multi-finger gesture
                     toggleDeviceInfo();
                 }
                 gestureInProgress = false;
                 maxFingers = 0;
             }, CONFIG.timeouts.gestureDetection);
         }
-        if (fingers > maxFingers) maxFingers = fingers;
+        if (fingers > maxFingers) {
+            maxFingers = fingers;
+            if (fingers >= 3) {
+                multiFingerGesture = true; // Mark as multi-finger as soon as 3+ fingers detected
+            }
+        }
         touchStartTime = Date.now();
     });
     videoContainer.addEventListener('touchmove', (e) => {
         e.preventDefault();
         const fingers = e.touches.length;
-        if (fingers > maxFingers) maxFingers = fingers;
+        if (fingers > maxFingers) {
+            maxFingers = fingers;
+            if (fingers >= 3) {
+                multiFingerGesture = true; // Mark as multi-finger during move
+            }
+        }
     });
     videoContainer.addEventListener('touchend', (e) => {
         if (e.target.closest('#next-button') || e.target.closest('#human-analytica-button')) return;
         e.preventDefault();
+        
+        // Skip tap detection if this was a multi-finger gesture
+        if (multiFingerGesture) {
+            LOGGER.debug('Skipping tap detection - multi-finger gesture detected');
+            return;
+        }
+        
         const currentTime = Date.now();
         const tapDuration = currentTime - touchStartTime;
         if (tapDuration < CONFIG.timeouts.tapDuration && e.changedTouches.length === 1) {
@@ -451,6 +497,10 @@ function setupKeyboardHandlers() {
             VideoManager.toggleMute();
         } else if (e.key === 'n' || e.key === 'N') {
             // Add your handler for 'n' key here if needed
+        } else if (e.key === 'i' || e.key === 'I') {
+            e.preventDefault();
+            LOGGER.user('I key pressed - toggle device info');
+            toggleDeviceInfoWithKeyboard();
         }
     });
 }
@@ -573,6 +623,7 @@ function toggleDeviceInfo() {
     clearTimeout(TIMEOUTS.deviceInfo);
     LOGGER.debug('Cleared existing timeout');
     STATE.infoVisible = true;
+    updateDeviceInfoContent();
     ELEMENTS.deviceInfo.classList.add('show');
     LOGGER.debug('Added "show" class to device info');
     LOGGER.debug('New classes after show:', ELEMENTS.deviceInfo.className);
@@ -593,6 +644,80 @@ function toggleDeviceInfo() {
         ELEMENTS.deviceInfo.classList.remove('show');
         LOGGER.ui('Device info auto-hidden after 4 seconds');
     }, CONFIG.timeouts.ui);
+}
+
+function toggleDeviceInfoWithKeyboard() {
+    LOGGER.debug('toggleDeviceInfoWithKeyboard() CALLED');
+    clearTimeout(TIMEOUTS.deviceInfo);
+    
+    if (STATE.infoVisible) {
+        // Hide device info
+        STATE.infoVisible = false;
+        ELEMENTS.deviceInfo.classList.remove('show');
+        LOGGER.ui('Device info hidden via keyboard');
+    } else {
+        // Show device info
+        STATE.infoVisible = true;
+        updateDeviceInfoContent();
+        ELEMENTS.deviceInfo.classList.add('show');
+        LOGGER.ui('Device info shown via keyboard');
+        
+        // Auto-hide after 4 seconds like the touch gesture
+        TIMEOUTS.deviceInfo = setTimeout(() => {
+            STATE.infoVisible = false;
+            ELEMENTS.deviceInfo.classList.remove('show');
+            LOGGER.ui('Device info auto-hidden after 4 seconds');
+        }, CONFIG.timeouts.ui);
+    }
+}
+
+function updateDeviceInfoContent() {
+    // Update device-specific content in the device info area
+    const mobile = isMobile();
+    const deviceType = mobile ? 'Mobile' : 'Desktop';
+    const platform = mobile ? 'mobile' : 'desktop';
+    const videoCount = STATE.videoList.length || 'Loading...';
+    
+    // Remove device type display (Row 1 - empty)
+    if (ELEMENTS.deviceType) {
+        ELEMENTS.deviceType.textContent = '';
+    }
+    
+    // Row 2: Total video count
+    if (ELEMENTS.videoCount) {
+        ELEMENTS.videoCount.textContent = videoCount;
+    }
+    
+    // Row 3: Current video position
+    if (ELEMENTS.currentVideo) {
+        const currentIndex = STATE.currentVideoIndex >= 0 ? STATE.currentVideoIndex + 1 : 1;
+        ELEMENTS.currentVideo.textContent = `${currentIndex}/${videoCount}`;
+    }
+    
+    // Row 4: Sound status
+    if (ELEMENTS.soundStatus) {
+        ELEMENTS.soundStatus.textContent = `Sound: ${STATE.activeVideo && STATE.activeVideo.muted ? 'Off' : 'On'}`;
+    }
+    
+    // Row 5: Stored count from localStorage (device saved number)
+    if (ELEMENTS.lastModified) {
+        const storageKey = mobile ? 'HAMC' : 'HADC';
+        const storedCount = localStorage.getItem(storageKey);
+        ELEMENTS.lastModified.textContent = storedCount ? `Stored: ${storedCount}` : 'Stored: None';
+    }
+    
+    // NEW ROW 6: Device count from config
+    if (ELEMENTS.deviceCount) {
+        const configCount = window.VIDEO_URL_CONFIG ? window.VIDEO_URL_CONFIG[platform].count : 'N/A';
+        ELEMENTS.deviceCount.textContent = `Count: ${configCount}`;
+    }
+    
+    // NEW ROW 7: Storage key (HADC/HAMC) - REMOVED
+    if (ELEMENTS.storageKey) {
+        ELEMENTS.storageKey.textContent = '';
+    }
+    
+    LOGGER.debug(`Device info content updated for ${deviceType} device`);
 }
 
 function attachVideoEventListeners() {
@@ -628,6 +753,10 @@ function init() {
     
     // Set up event handlers
     setupEventHandlers();
+    
+    // Device info area is OFF by default
+    STATE.infoVisible = false;
+    LOGGER.ui('Device info area OFF by default - use 3-finger gesture (mobile) or I key (desktop) to show');
     
     // Initialize video list based on device type
     if (typeof window.VIDEO_URLS !== 'undefined') {

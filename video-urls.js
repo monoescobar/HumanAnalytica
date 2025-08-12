@@ -45,17 +45,123 @@ const VIDEO_CONFIG = {
   }
 };
 
-// Video URLs configuration for Dreams and Poems
-window.VIDEO_URLS = {
-    desktop: [
-      "https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0001.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0002.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0003.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0004.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0005.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0006.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0007.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0008.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0009.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0010.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0011.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0012.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0013.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0014.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0015.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0016.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0017.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0018.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0019.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0020.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0021.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0022.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0023.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0024.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0025.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0026.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0027.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0028.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0029.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0030.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0031.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0032.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0033.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0034.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0035.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0036.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0037.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0038.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0039.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0040.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0041.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0042.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0043.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0044.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0045.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0046.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0047.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0048.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0049.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_0050.mp4" 
-    
-    ],
-    mobile: [
-      "https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0001.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0002.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0003.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0004.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0005.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0006.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0007.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0008.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0009.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0010.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0011.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0012.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0013.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0014.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0015.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0016.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0017.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0018.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0019.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0020.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0021.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0022.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0023.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0024.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0025.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0026.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0027.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0028.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0029.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0030.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0031.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0032.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0033.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0034.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0035.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0036.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0037.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0038.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0039.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0040.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0041.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0042.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0043.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0044.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0045.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0046.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0047.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0048.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0049.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0050.mp4","https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_0051.mp4"
-
-    ]
+// Video URL generation configuration
+window.VIDEO_URL_CONFIG = {
+    desktop: {
+        baseUrl: "https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Desktop/HumanAnalytica_hor_",
+        count: 50, // Change this number to update desktop video count
+        extension: ".mp4"
+    },
+    mobile: {
+        baseUrl: "https://filedn.com/lHC6pEBkEzyQnHC8rtghiku/HumanAnalytica/Mobile/HumanAnalytica_ver_",
+        count: 50, // Change this number to update mobile video count  
+        extension: ".mp4"
+    }
 };
+
+// localStorage management for video counts
+const VIDEO_COUNT_MANAGER = {
+    keys: {
+        desktop: 'HADC',
+        mobile: 'HAMC'
+    },
+    
+    // Get stored count for platform
+    getStoredCount(platform) {
+        const key = this.keys[platform];
+        const stored = localStorage.getItem(key);
+        return stored ? parseInt(stored, 10) : null;
+    },
+    
+    // Save count for platform
+    saveCount(platform, count) {
+        const key = this.keys[platform];
+        localStorage.setItem(key, count.toString());
+        console.log(`📁 Saved ${platform} count: ${count} (key: ${key})`);
+    },
+    
+    // Determine first video strategy and update storage
+    processVideoCount(platform) {
+        const hardcodedCount = window.VIDEO_URL_CONFIG[platform].count;
+        const storedCount = this.getStoredCount(platform);
+        
+        console.log(`🔍 Processing ${platform} count - Hardcoded: ${hardcodedCount}, Stored: ${storedCount}`);
+        
+        if (storedCount === null) {
+            // Scenario 1: First time user - save hardcoded count
+            this.saveCount(platform, hardcodedCount);
+            return { strategy: 'random', startVideo: null };
+        }
+        
+        if (storedCount === hardcodedCount) {
+            // Scenario 2: Same count - do nothing
+            console.log(`✅ ${platform} count unchanged (${storedCount})`);
+            return { strategy: 'random', startVideo: null };
+        }
+        
+        if (storedCount > hardcodedCount) {
+            // Scenario 3: Device count > hardcoded - overwrite device
+            console.log(`⬇️ ${platform} count reduced: ${storedCount} → ${hardcodedCount}`);
+            this.saveCount(platform, hardcodedCount);
+            return { strategy: 'random', startVideo: null };
+        }
+        
+        if (storedCount < hardcodedCount) {
+            // Scenario 4: Device count < hardcoded - play last video first, then random
+            console.log(`⬆️ ${platform} count increased: ${storedCount} → ${hardcodedCount} (NEW CONTENT!)`);
+            this.saveCount(platform, hardcodedCount);
+            return { strategy: 'lastFirst', startVideo: hardcodedCount };
+        }
+    }
+};
+
+// Function to generate video URL array for a platform
+function generateVideoUrls(platform) {
+    const config = window.VIDEO_URL_CONFIG[platform];
+    if (!config) {
+        console.error(`Invalid platform: ${platform}`);
+        return [];
+    }
+    
+    const urls = [];
+    for (let i = 1; i <= config.count; i++) {
+        // Convert number to 4-digit padded string (0001, 0002, etc.)
+        const paddedNumber = i.toString().padStart(4, '0');
+        const url = config.baseUrl + paddedNumber + config.extension;
+        urls.push(url);
+    }
+    
+    console.log(`Generated ${urls.length} ${platform} video URLs`);
+    return urls;
+}
+
+// Generate the video URL arrays dynamically with localStorage strategy
+function initializeVideoSystem() {
+    // Detect platform
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+    const platform = isMobile ? 'mobile' : 'desktop';
+    
+    // Process video count and get strategy
+    const countResult = VIDEO_COUNT_MANAGER.processVideoCount(platform);
+    
+    // Generate URLs
+    const videoUrls = {
+        desktop: generateVideoUrls('desktop'),
+        mobile: generateVideoUrls('mobile')
+    };
+    
+    // Attach strategy info to the video URLs object
+    videoUrls.strategy = countResult.strategy;
+    videoUrls.startVideo = countResult.startVideo;
+    videoUrls.currentPlatform = platform;
+    
+    console.log(`🎬 Video system initialized for ${platform} - Strategy: ${countResult.strategy}${countResult.startVideo ? `, Start: video ${countResult.startVideo}` : ''}`);
+    
+    return videoUrls;
+}
+
+// Initialize the video system
+window.VIDEO_URLS = initializeVideoSystem();
 
 // Enhanced error handling and URL validation for Dreams and Poems v024
 window.VIDEO_ERROR_HANDLER = {
@@ -251,4 +357,6 @@ window.ENHANCED_VIDEO_LOADER = {
 };
 
 console.log('📹 Enhanced video error handling and validation loaded');
-console.log(`📊 Total videos configured: Desktop ${VIDEO_URLS.desktop.length}, Mobile ${VIDEO_URLS.mobile.length}`);
+console.log(`📊 Total videos configured: Desktop ${window.VIDEO_URL_CONFIG.desktop.count}, Mobile ${window.VIDEO_URL_CONFIG.mobile.count}`);
+console.log(`🎬 Video URLs generated dynamically - Desktop: ${VIDEO_URLS.desktop.length}, Mobile: ${VIDEO_URLS.mobile.length}`);
+console.log(`🎯 Current platform: ${VIDEO_URLS.currentPlatform}, Strategy: ${VIDEO_URLS.strategy}${VIDEO_URLS.startVideo ? `, Start video: ${VIDEO_URLS.startVideo}` : ''}`);

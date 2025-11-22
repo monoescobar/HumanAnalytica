@@ -1,5 +1,7 @@
 // main.js for Human Analytica - extracted from index.html
 
+const APP_VERSION = 'V0.002';
+
 // Configuration object for timeouts and settings
 const CONFIG = {
     timeouts: {
@@ -226,7 +228,8 @@ const ELEMENTS = {
     videoContainer: document.getElementById('video-container'),
     // New elements for device info area
     deviceCount: document.getElementById('device-count'),
-    storageKey: document.getElementById('storage-key')
+    storageKey: document.getElementById('storage-key'),
+    appVersion: document.getElementById('app-version')
 };
 
 // Application State
@@ -617,6 +620,9 @@ function toggleDeviceInfoWithKeyboard() {
         updateDeviceInfoContent();
         ELEMENTS.deviceInfo.classList.add('show');
         LOGGER.ui('Device info shown via keyboard (persistent)');
+
+        // Force style recalculation
+        ELEMENTS.deviceInfo.offsetHeight;
     }
 }
 
@@ -664,6 +670,11 @@ function updateDeviceInfoContent() {
     // NEW ROW 7: Storage key (HADC/HAMC) - REMOVED
     if (ELEMENTS.storageKey) {
         ELEMENTS.storageKey.textContent = '';
+    }
+
+    // NEW ROW 8: App Version
+    if (ELEMENTS.appVersion) {
+        ELEMENTS.appVersion.textContent = `Version: ${APP_VERSION}`;
     }
 
     LOGGER.debug(`Device info content updated for ${deviceType} device`);

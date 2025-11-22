@@ -304,31 +304,31 @@ video, #video2 {
 
 @media screen and (max-width: 768px) {
     #device-info {
-        color: #606060;
+        color: #909090;
     }
     #sound-notification {
-        color: #606060;
+        color: #909090;
     }
     #sound-notification .text {
-        color: #606060;
+        color: #909090;
     }
     #loading {
-        color: #606060;
+        color: #909090;
     }
     #next-button {
-        color: #606060;
+        color: #909090;
     }
     #human-analytica-button {
-        color: #606060;
+        color: #909090;
     }
     #info-area h2 {
-        color: #606060;
+        color: #909090;
     }
     #info-area p {
-        color: #606060;
+        color: #909090;
     }
     #info-area .close-hint {
-        color: #606060;
+        color: #909090;
     }
     #info-area .desktop-content {
         display: none;

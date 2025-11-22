@@ -1,11 +1,11 @@
 // main.js for Human Analytica - extracted from index.html
 
-const APP_VERSION = 'V0.002';
+const APP_VERSION = 'V0.010';
 
 // Configuration object for timeouts and settings
 const CONFIG = {
     timeouts: {
-        ui: 4000,
+        ui: 2134,
         clickDelay: 300,
         tapDuration: 200,
         gestureDetection: 500,
@@ -53,8 +53,11 @@ VideoManager.loadNextVideo = function (showUI = true) {
         if (TIMEOUTS.notification) clearTimeout(TIMEOUTS.notification);
         TIMEOUTS.notification = setTimeout(() => {
             ELEMENTS.loading.classList.remove('show');
-            ELEMENTS.nextButton.classList.remove('show');
-            ELEMENTS.humanAnalyticaButton.classList.remove('show');
+            // Only hide bottom buttons if device info is not visible
+            if (!STATE.infoVisible) {
+                ELEMENTS.nextButton.classList.remove('show');
+                ELEMENTS.humanAnalyticaButton.classList.remove('show');
+            }
             LOGGER.debug('Backup timeout: Force hiding loading UI (double click/tap)');
         }, CONFIG.timeouts.ui);
     }
@@ -509,7 +512,15 @@ function toggleInfoArea() {
         ELEMENTS.infoArea.classList.remove('show');
         STATE.infoAreaVisible = false;
         LOGGER.ui('Info area hidden');
-        LOGGER.debug('Bottom buttons remain hidden until next user interaction');
+
+        // Restore bottom buttons if device info is visible
+        if (STATE.infoVisible) {
+            ELEMENTS.nextButton.classList.add('show');
+            ELEMENTS.humanAnalyticaButton.classList.add('show');
+            LOGGER.debug('Bottom buttons restored (device info is visible)');
+        } else {
+            LOGGER.debug('Bottom buttons remain hidden until next user interaction');
+        }
 
         // Show fullscreen hint after a delay to avoid flash during closing transition
         setTimeout(() => {
@@ -521,9 +532,15 @@ function toggleInfoArea() {
     } else {
         ELEMENTS.infoArea.classList.add('show');
         STATE.infoAreaVisible = true;
-        ELEMENTS.nextButton.classList.remove('show');
-        ELEMENTS.humanAnalyticaButton.classList.remove('show');
-        LOGGER.ui('Info area shown, bottom buttons hidden');
+
+        // Only hide bottom buttons if device info is NOT visible
+        if (!STATE.infoVisible) {
+            ELEMENTS.nextButton.classList.remove('show');
+            ELEMENTS.humanAnalyticaButton.classList.remove('show');
+            LOGGER.ui('Info area shown, bottom buttons hidden');
+        } else {
+            LOGGER.ui('Info area shown, bottom buttons kept visible (device info is on)');
+        }
 
         // Hide fullscreen hint immediately when info area is opening
         const fullscreenHint = document.getElementById('fullscreen-hint');
@@ -556,14 +573,13 @@ function showInitialNotification() {
     LOGGER.ui('Showing initial notification and buttons');
 
     // Auto-hide after a delay (longer for initial instructions)
-    const hideDelay = 4000; // 4 seconds for initial instructions
     clearTimeout(TIMEOUTS.notification);
     TIMEOUTS.notification = setTimeout(() => {
         ELEMENTS.soundNotification.classList.remove('show');
         ELEMENTS.nextButton.classList.remove('show');
         ELEMENTS.humanAnalyticaButton.classList.remove('show');
         LOGGER.ui('Auto-hiding initial notification');
-    }, hideDelay);
+    }, CONFIG.timeouts.ui);
 }
 
 function showSoundNotification() {
@@ -576,54 +592,48 @@ function showSoundNotification() {
     }
     document.getElementById('sound-status').textContent = `Sound: ${STATE.activeVideo.muted ? 'Off' : 'On'}`;
 
-    // Show sound notification
+    // Show sound notification and bottom buttons
     ELEMENTS.soundNotification.classList.add('show');
+    ELEMENTS.nextButton.classList.add('show');
+    ELEMENTS.humanAnalyticaButton.classList.add('show');
 
     TIMEOUTS.notification = setTimeout(() => {
         ELEMENTS.soundNotification.classList.remove('show');
+        // Only hide bottom buttons if device info is not visible
+        if (!STATE.infoVisible) {
+            ELEMENTS.nextButton.classList.remove('show');
+            ELEMENTS.humanAnalyticaButton.classList.remove('show');
+        }
+    }, CONFIG.timeouts.ui);
+}
+
+function setDeviceInfoVisibility(show) {
+    if (show) {
+        STATE.infoVisible = true;
+        updateDeviceInfoContent();
+        ELEMENTS.deviceInfo.classList.add('show');
+        ELEMENTS.nextButton.classList.add('show');
+        ELEMENTS.humanAnalyticaButton.classList.add('show');
+        // Force style recalculation
+        ELEMENTS.deviceInfo.offsetHeight;
+        LOGGER.ui('Device info and bottom buttons shown (persistent)');
+    } else {
+        STATE.infoVisible = false;
+        ELEMENTS.deviceInfo.classList.remove('show');
         ELEMENTS.nextButton.classList.remove('show');
         ELEMENTS.humanAnalyticaButton.classList.remove('show');
-    }, CONFIG.timeouts.ui);
+        LOGGER.ui('Device info and bottom buttons hidden');
+    }
 }
 
 function toggleDeviceInfo() {
     LOGGER.debug('toggleDeviceInfo() CALLED');
-
-    if (STATE.infoVisible) {
-        // Hide device info
-        STATE.infoVisible = false;
-        ELEMENTS.deviceInfo.classList.remove('show');
-        LOGGER.ui('Device info hidden via gesture');
-    } else {
-        // Show device info
-        STATE.infoVisible = true;
-        updateDeviceInfoContent();
-        ELEMENTS.deviceInfo.classList.add('show');
-        LOGGER.ui('Device info shown via gesture (persistent)');
-
-        // Force style recalculation
-        ELEMENTS.deviceInfo.offsetHeight;
-    }
+    setDeviceInfoVisibility(!STATE.infoVisible);
 }
 
 function toggleDeviceInfoWithKeyboard() {
     LOGGER.debug('toggleDeviceInfoWithKeyboard() CALLED');
-
-    if (STATE.infoVisible) {
-        // Hide device info
-        STATE.infoVisible = false;
-        ELEMENTS.deviceInfo.classList.remove('show');
-        LOGGER.ui('Device info hidden via keyboard');
-    } else {
-        // Show device info
-        STATE.infoVisible = true;
-        updateDeviceInfoContent();
-        ELEMENTS.deviceInfo.classList.add('show');
-        LOGGER.ui('Device info shown via keyboard (persistent)');
-
-        // Force style recalculation
-        ELEMENTS.deviceInfo.offsetHeight;
-    }
+    setDeviceInfoVisibility(!STATE.infoVisible);
 }
 
 function updateDeviceInfoContent() {

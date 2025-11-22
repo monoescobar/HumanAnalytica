@@ -19,7 +19,8 @@ body {
     height: 100vh;
 }
 
-video, #video2 {
+video,
+#video2 {
     position: absolute;
     top: 0;
     left: 0;
@@ -46,13 +47,15 @@ video, #video2 {
     font-size: 12px;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    transition: all 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+    transform: translateY(10px);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 #device-info.show {
     opacity: 1;
     pointer-events: auto;
+    transform: translateY(0);
 }
 
 #sound-notification {
@@ -74,7 +77,8 @@ video, #video2 {
     z-index: 100;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    transition: all 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+    transform: translate(-50%, -40%) scale(0.95);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     min-width: 140px;
 }
@@ -95,6 +99,7 @@ video, #video2 {
 
 #sound-notification.show {
     opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
 }
 
 #sound-notification .text {
@@ -121,7 +126,8 @@ video, #video2 {
     z-index: 2000;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    transition: all 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+    transform: translate(-50%, -40%) scale(0.95);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     min-width: 200px;
 }
@@ -137,6 +143,7 @@ video, #video2 {
 
 #loading.show {
     opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
 }
 
 #next-button {
@@ -159,7 +166,8 @@ video, #video2 {
     z-index: 1000;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    transition: all 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+    transform: translateY(20px);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     height: 60px;
     cursor: pointer;
@@ -186,7 +194,8 @@ video, #video2 {
     z-index: 1000;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    transition: all 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+    transform: translateY(20px);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     height: 60px;
     cursor: pointer;
@@ -199,6 +208,7 @@ video, #video2 {
         right: max(env(safe-area-inset-right, 0px) + 20px, 20px);
         z-index: 2147483647;
     }
+
     #human-analytica-button {
         bottom: max(env(safe-area-inset-bottom, 0px) + 20px, 20px);
         left: max(env(safe-area-inset-left, 0px) + 20px, 20px);
@@ -209,11 +219,13 @@ video, #video2 {
 #next-button.show {
     opacity: 1;
     pointer-events: auto;
+    transform: translateY(0);
 }
 
 #human-analytica-button.show {
     opacity: 1;
     pointer-events: auto;
+    transform: translateY(0);
 }
 
 #next-button:hover {
@@ -248,7 +260,8 @@ video, #video2 {
     z-index: 3000;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    transition: all 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+    transform: scale(0.98);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     padding: 40px;
     overflow-y: auto;
@@ -270,6 +283,7 @@ video, #video2 {
 #info-area.show {
     opacity: 1;
     pointer-events: auto;
+    transform: scale(1);
 }
 
 #info-area h2 {
@@ -304,41 +318,52 @@ video, #video2 {
 
 @media screen and (max-width: 768px) {
     #device-info {
-        color: #909090;
+        color: #B3B3B3;
     }
+
     #sound-notification {
-        color: #909090;
+        color: #B3B3B3;
     }
+
     #sound-notification .text {
-        color: #909090;
+        color: #B3B3B3;
     }
+
     #loading {
-        color: #909090;
+        color: #B3B3B3;
     }
+
     #next-button {
-        color: #909090;
+        color: #B3B3B3;
     }
+
     #human-analytica-button {
-        color: #909090;
+        color: #B3B3B3;
     }
+
     #info-area h2 {
-        color: #909090;
+        color: #B3B3B3;
     }
+
     #info-area p {
-        color: #909090;
+        color: #B3B3B3;
     }
+
     #info-area .close-hint {
-        color: #909090;
+        color: #B3B3B3;
     }
+
     #info-area .desktop-content {
         display: none;
     }
+
     #info-area .mobile-content {
         display: block;
     }
 }
 
-#next-button, #human-analytica-button {
+#next-button,
+#human-analytica-button {
     width: 232px;
     min-width: 232px;
     max-width: 232px;

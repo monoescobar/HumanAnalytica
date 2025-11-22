@@ -585,38 +585,26 @@ function showSoundNotification() {
 
 function toggleDeviceInfo() {
     LOGGER.debug('toggleDeviceInfo() CALLED');
-    LOGGER.debug('Device info element exists:', !!ELEMENTS.deviceInfo);
-    LOGGER.debug('Current classes:', ELEMENTS.deviceInfo.className);
-    LOGGER.debug('Current opacity:', window.getComputedStyle(ELEMENTS.deviceInfo).opacity);
-    clearTimeout(TIMEOUTS.deviceInfo);
-    LOGGER.debug('Cleared existing timeout');
-    STATE.infoVisible = true;
-    updateDeviceInfoContent();
-    ELEMENTS.deviceInfo.classList.add('show');
-    LOGGER.debug('Added "show" class to device info');
-    LOGGER.debug('New classes after show:', ELEMENTS.deviceInfo.className);
-    ELEMENTS.deviceInfo.offsetHeight;
-    LOGGER.debug('Forced style recalculation');
-    setTimeout(() => {
-        const computedOpacity = window.getComputedStyle(ELEMENTS.deviceInfo).opacity;
-        LOGGER.debug('Computed opacity after show:', computedOpacity);
-        if (computedOpacity === '0') {
-            LOGGER.warn('WARNING: Opacity is still 0 - CSS might not be applied');
-        } else {
-            LOGGER.debug('SUCCESS: Device info should be visible');
-        }
-    }, CONFIG.timeouts.debugCheck);
-    LOGGER.user('DEVICE INFO SHOWN - 3-finger gesture detected successfully!');
-    TIMEOUTS.deviceInfo = setTimeout(() => {
+
+    if (STATE.infoVisible) {
+        // Hide device info
         STATE.infoVisible = false;
         ELEMENTS.deviceInfo.classList.remove('show');
-        LOGGER.ui('Device info auto-hidden after 4 seconds');
-    }, CONFIG.timeouts.ui);
+        LOGGER.ui('Device info hidden via gesture');
+    } else {
+        // Show device info
+        STATE.infoVisible = true;
+        updateDeviceInfoContent();
+        ELEMENTS.deviceInfo.classList.add('show');
+        LOGGER.ui('Device info shown via gesture (persistent)');
+
+        // Force style recalculation
+        ELEMENTS.deviceInfo.offsetHeight;
+    }
 }
 
 function toggleDeviceInfoWithKeyboard() {
     LOGGER.debug('toggleDeviceInfoWithKeyboard() CALLED');
-    clearTimeout(TIMEOUTS.deviceInfo);
 
     if (STATE.infoVisible) {
         // Hide device info
@@ -628,14 +616,7 @@ function toggleDeviceInfoWithKeyboard() {
         STATE.infoVisible = true;
         updateDeviceInfoContent();
         ELEMENTS.deviceInfo.classList.add('show');
-        LOGGER.ui('Device info shown via keyboard');
-
-        // Auto-hide after 4 seconds like the touch gesture
-        TIMEOUTS.deviceInfo = setTimeout(() => {
-            STATE.infoVisible = false;
-            ELEMENTS.deviceInfo.classList.remove('show');
-            LOGGER.ui('Device info auto-hidden after 4 seconds');
-        }, CONFIG.timeouts.ui);
+        LOGGER.ui('Device info shown via keyboard (persistent)');
     }
 }
 

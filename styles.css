@@ -206,13 +206,11 @@ video,
     #next-button {
         bottom: max(env(safe-area-inset-bottom, 0px) + 20px, 20px);
         right: max(env(safe-area-inset-right, 0px) + 20px, 20px);
-        z-index: 2147483647;
     }
 
     #human-analytica-button {
         bottom: max(env(safe-area-inset-bottom, 0px) + 20px, 20px);
         left: max(env(safe-area-inset-left, 0px) + 20px, 20px);
-        z-index: 2147483647;
     }
 }
 

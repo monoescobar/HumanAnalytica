@@ -1,6 +1,6 @@
 // main.js for Human Analytica - extracted from index.html
 
-const APP_VERSION = 'V0.010';
+const APP_VERSION = 'V0.017';
 
 // Configuration object for timeouts and settings
 const CONFIG = {
@@ -37,6 +37,9 @@ const UIStateManager = {};
 VideoManager.loadNextVideo = function (showUI = true) {
     if (STATE.isTransitioning) return;
     const isUserTriggered = showUI === true;
+
+    // Clear any pending notification timeouts to prevent flash
+    clearTimeout(TIMEOUTS.notification);
     ELEMENTS.soundNotification.classList.remove('show');
 
     if (isUserTriggered) {
@@ -50,7 +53,6 @@ VideoManager.loadNextVideo = function (showUI = true) {
             ELEMENTS.humanAnalyticaButton.classList.remove('show');
         }
         STATE.hasShownLoadingOnce = true;
-        if (TIMEOUTS.notification) clearTimeout(TIMEOUTS.notification);
         TIMEOUTS.notification = setTimeout(() => {
             ELEMENTS.loading.classList.remove('show');
             // Only hide bottom buttons if device info is not visible
@@ -202,6 +204,11 @@ VideoManager.transitionToNext = function (showUI = true) {
 };
 
 UIStateManager.toggleFullscreen = function () {
+    // Clear any active notification timeout and hide notifications
+    clearTimeout(TIMEOUTS.notification);
+    ELEMENTS.soundNotification.classList.remove('show');
+    ELEMENTS.loading.classList.remove('show');
+
     if (document.fullscreenElement) {
         document.exitFullscreen().catch(err => {
             LOGGER.debug('Error exiting fullscreen:', err);
@@ -386,6 +393,9 @@ function setupVideoContainerHandlers() {
 
         if (clickCount === 3) {
             LOGGER.user('Triple click detected - toggle fullscreen');
+            // Immediately hide any notifications that might have appeared
+            ELEMENTS.soundNotification.classList.remove('show');
+            ELEMENTS.loading.classList.remove('show');
             UIStateManager.toggleFullscreen();
             clickCount = 0;
         } else {
@@ -592,19 +602,26 @@ function showSoundNotification() {
     }
     document.getElementById('sound-status').textContent = `Sound: ${STATE.activeVideo.muted ? 'Off' : 'On'}`;
 
-    // Show sound notification and bottom buttons
-    ELEMENTS.soundNotification.classList.add('show');
-    ELEMENTS.nextButton.classList.add('show');
-    ELEMENTS.humanAnalyticaButton.classList.add('show');
+    // Clear any existing timeout to reset the timer
+    clearTimeout(TIMEOUTS.notification);
 
+    // Add a small delay before showing to prevent flash during triple-click
     TIMEOUTS.notification = setTimeout(() => {
-        ELEMENTS.soundNotification.classList.remove('show');
-        // Only hide bottom buttons if device info is not visible
-        if (!STATE.infoVisible) {
-            ELEMENTS.nextButton.classList.remove('show');
-            ELEMENTS.humanAnalyticaButton.classList.remove('show');
-        }
-    }, CONFIG.timeouts.ui);
+        // Show sound notification and bottom buttons
+        ELEMENTS.soundNotification.classList.add('show');
+        ELEMENTS.nextButton.classList.add('show');
+        ELEMENTS.humanAnalyticaButton.classList.add('show');
+
+        // Set hide timeout
+        TIMEOUTS.notification = setTimeout(() => {
+            ELEMENTS.soundNotification.classList.remove('show');
+            // Only hide bottom buttons if device info is not visible
+            if (!STATE.infoVisible) {
+                ELEMENTS.nextButton.classList.remove('show');
+                ELEMENTS.humanAnalyticaButton.classList.remove('show');
+            }
+        }, CONFIG.timeouts.ui);
+    }, 350); // 350ms delay - longer than clickDelay to avoid flash during triple-click
 }
 
 function setDeviceInfoVisibility(show) {

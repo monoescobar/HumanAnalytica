@@ -582,13 +582,12 @@ function showInitialNotification() {
     ELEMENTS.humanAnalyticaButton.classList.add('show');
     LOGGER.ui('Showing initial notification and buttons');
 
-    // Auto-hide after a delay (longer for initial instructions)
+    // Auto-hide notification after a delay, but keep buttons visible
     clearTimeout(TIMEOUTS.notification);
     TIMEOUTS.notification = setTimeout(() => {
         ELEMENTS.soundNotification.classList.remove('show');
-        ELEMENTS.nextButton.classList.remove('show');
-        ELEMENTS.humanAnalyticaButton.classList.remove('show');
-        LOGGER.ui('Auto-hiding initial notification');
+        // Keep buttons visible on initial load - don't hide them
+        LOGGER.ui('Auto-hiding initial notification (keeping buttons visible)');
     }, CONFIG.timeouts.ui);
 }
 

@@ -1,6 +1,6 @@
 // main.js for Human Analytica - extracted from index.html
 
-const APP_VERSION = 'V0.017';
+const APP_VERSION = 'V0.024';
 
 // Configuration object for timeouts and settings
 const CONFIG = {
@@ -9,6 +9,7 @@ const CONFIG = {
         clickDelay: 300,
         tapDuration: 200,
         gestureDetection: 500,
+        crossfade: 500,
         debugCheck: 5000,
         fullscreenHint: 2000,
         fallbackInit: 1000
@@ -36,14 +37,20 @@ const UIStateManager = {};
 // --- Move video logic into VideoManager ---
 VideoManager.loadNextVideo = function (showUI = true) {
     if (STATE.isTransitioning) return;
+    if (!STATE.videoList.length) {
+        LOGGER.error('No videos are available to load');
+        return;
+    }
     const isUserTriggered = showUI === true;
 
     // Clear any pending notification timeouts to prevent flash
     clearTimeout(TIMEOUTS.notification);
     ELEMENTS.soundNotification.classList.remove('show');
+    ELEMENTS.soundNotification.setAttribute('aria-hidden', 'true');
 
     if (isUserTriggered) {
         ELEMENTS.loading.classList.add('show');
+        ELEMENTS.loading.setAttribute('aria-hidden', 'false');
         LOGGER.ui('Showing loading screen');
         if (!document.fullscreenElement) {
             ELEMENTS.nextButton.classList.add('show');
@@ -55,6 +62,7 @@ VideoManager.loadNextVideo = function (showUI = true) {
         STATE.hasShownLoadingOnce = true;
         TIMEOUTS.notification = setTimeout(() => {
             ELEMENTS.loading.classList.remove('show');
+            ELEMENTS.loading.setAttribute('aria-hidden', 'true');
             // Only hide bottom buttons if device info is not visible
             if (!STATE.infoVisible) {
                 ELEMENTS.nextButton.classList.remove('show');
@@ -68,15 +76,30 @@ VideoManager.loadNextVideo = function (showUI = true) {
     let selectedIndex;
     let logMessage;
 
+    const availableIndexes = STATE.videoList
+        .map((_, index) => index)
+        .filter(index => !STATE.failedVideoIndexes.has(index));
+
+    if (!availableIndexes.length) {
+        ELEMENTS.loading.querySelector('.text').textContent = 'Unable to load video';
+        ELEMENTS.loading.classList.add('show');
+        ELEMENTS.loading.setAttribute('aria-hidden', 'false');
+        LOGGER.error('All configured videos failed to load');
+        return;
+    }
+
     // Check if this is the first video load and we have a specific start video
-    if (STATE.videoLoadCount === 0 && window.VIDEO_URLS.strategy === 'lastFirst' && window.VIDEO_URLS.startVideo) {
+    if (STATE.videoLoadCount === 0 && window.VIDEO_URLS.strategy === 'lastFirst' && window.VIDEO_URLS.startVideo && !STATE.failedVideoIndexes.has(window.VIDEO_URLS.startVideo - 1)) {
         // Use the specific start video (highest numbered video)
         selectedIndex = window.VIDEO_URLS.startVideo - 1; // Convert to 0-based index
         logMessage = `Loading LAST video (new content): ${selectedIndex + 1}/${STATE.videoList.length}${isUserTriggered ? ' (with UI)' : ' (silent)'}`;
         LOGGER.video(`🆕 NEW CONTENT DETECTED - Starting with highest video #${window.VIDEO_URLS.startVideo}`);
     } else {
-        // Always random for all other cases
-        selectedIndex = Math.floor(Math.random() * STATE.videoList.length);
+        // Randomize while avoiding known failures and immediate repeats.
+        const candidates = availableIndexes.length > 1
+            ? availableIndexes.filter(index => index !== STATE.currentVideoIndex)
+            : availableIndexes;
+        selectedIndex = candidates[Math.floor(Math.random() * candidates.length)];
         logMessage = `Loading random video: ${selectedIndex + 1}/${STATE.videoList.length}${isUserTriggered ? ' (with UI)' : ' (silent)'}`;
     }
 
@@ -111,6 +134,7 @@ VideoManager.loadNextVideo = function (showUI = true) {
             STATE.currentVideoIndex = selectedIndex;
             STATE.videoLoadCount++; // Increment load counter
             STATE.isTransitioning = false;
+            ELEMENTS.loading.setAttribute('aria-hidden', 'true');
 
             LOGGER.video(`Video ${selectedIndex + 1} loaded and playing: ${fileName}`);
 
@@ -120,7 +144,9 @@ VideoManager.loadNextVideo = function (showUI = true) {
             }
         }).catch(error => {
             LOGGER.error('Error playing video:', error);
+            STATE.failedVideoIndexes.add(selectedIndex);
             STATE.isTransitioning = false;
+            setTimeout(() => VideoManager.loadNextVideo(false), 250);
         });
     };
 
@@ -128,7 +154,11 @@ VideoManager.loadNextVideo = function (showUI = true) {
         STATE.inactiveVideo.removeEventListener('loadeddata', handleVideoLoad);
         STATE.inactiveVideo.removeEventListener('error', handleVideoError);
         LOGGER.error('Error loading video:', videoUrl);
+        STATE.failedVideoIndexes.add(selectedIndex);
+        STATE.inactiveVideo.removeAttribute('src');
+        STATE.inactiveVideo.load();
         STATE.isTransitioning = false;
+        setTimeout(() => VideoManager.loadNextVideo(false), 250);
     };
 
     STATE.inactiveVideo.addEventListener('loadeddata', handleVideoLoad);
@@ -139,14 +169,9 @@ function updateNotificationText() {
     const text = ELEMENTS.soundNotification.querySelector('.text');
     const mobile = isMobile();
     if (mobile) {
-        text.innerHTML = 'One Tap<br>Sound On<br><br>Two Taps<br>Next One';
+        text.innerHTML = 'One Tap<br>Sound On / Off<br><br>Two Taps<br>Flow / Hold';
     } else {
-        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-        if (isMac) {
-            text.innerHTML = 'One Click Sound On<br><br>Two Clicks Next One<br><br>Three Clicks Full Screen';
-        } else {
-            text.innerHTML = 'One Click Sound On<br><br>Two Clicks Next One<br><br>Three Clicks Full Screen';
-        }
+        text.innerHTML = 'One Click<br>Sound On / Off<br><br>Two Clicks<br>Flow / Hold<br><br>Three Clicks<br>Full Screen';
     }
 
     // Update device info content as well
@@ -203,18 +228,186 @@ VideoManager.transitionToNext = function (showUI = true) {
     VideoManager.loadNextVideo(showUI);
 };
 
+// Continuous numbered sequence: begin randomly, then advance with wraparound.
+VideoManager.getSequentialIndex = function (fromIndex) {
+    if (!STATE.videoList.length) return null;
+
+    for (let offset = 1; offset <= STATE.videoList.length; offset++) {
+        const index = (fromIndex + offset + STATE.videoList.length) % STATE.videoList.length;
+        if (!STATE.failedVideoIndexes.has(index) && index !== STATE.currentVideoIndex) {
+            return index;
+        }
+    }
+
+    return null;
+};
+
+VideoManager.showSequenceUnavailable = function () {
+    ELEMENTS.loading.querySelector('.text').textContent = 'Unable to continue the sequence';
+    ELEMENTS.loading.classList.add('show');
+    ELEMENTS.loading.setAttribute('aria-hidden', 'false');
+};
+
+VideoManager.startFlow = function () {
+    const availableIndexes = STATE.videoList
+        .map((_, index) => index)
+        .filter(index => !STATE.failedVideoIndexes.has(index));
+
+    if (!availableIndexes.length) {
+        VideoManager.showSequenceUnavailable();
+        return;
+    }
+
+    const randomIndex = availableIndexes[Math.floor(Math.random() * availableIndexes.length)];
+    LOGGER.video(`Starting Flow at random video ${randomIndex + 1}/${STATE.videoList.length}`);
+    VideoManager.preloadFlowVideo(randomIndex, true);
+};
+
+VideoManager.preloadFlowVideo = function (index, isInitial = false) {
+    if (index === null || index === undefined) {
+        VideoManager.showSequenceUnavailable();
+        return;
+    }
+
+    const targetVideo = STATE.inactiveVideo;
+    const videoUrl = STATE.videoList[index];
+    const requestId = ++STATE.preloadRequestId;
+
+    STATE.nextVideoIndex = index;
+    STATE.nextVideoReady = false;
+    targetVideo.loop = false;
+    targetVideo.muted = STATE.activeVideo ? STATE.activeVideo.muted : true;
+
+    const handleVideoLoad = () => {
+        targetVideo.removeEventListener('error', handleVideoError);
+        if (requestId !== STATE.preloadRequestId) return;
+
+        targetVideo.pause();
+        targetVideo.currentTime = 0;
+        STATE.nextVideoReady = true;
+        LOGGER.video(`Preloaded video ${index + 1}/${STATE.videoList.length}`);
+
+        if (isInitial || (STATE.mode === 'flow' && STATE.currentCycleComplete)) {
+            VideoManager.crossfadeToPreparedVideo(isInitial);
+        }
+    };
+
+    const handleVideoError = () => {
+        targetVideo.removeEventListener('loadeddata', handleVideoLoad);
+        if (requestId !== STATE.preloadRequestId) return;
+
+        LOGGER.error('Error preloading video:', videoUrl);
+        STATE.failedVideoIndexes.add(index);
+        STATE.nextVideoReady = false;
+        targetVideo.removeAttribute('src');
+        targetVideo.load();
+
+        const replacementIndex = VideoManager.getSequentialIndex(index);
+        setTimeout(() => VideoManager.preloadFlowVideo(replacementIndex, isInitial), 250);
+    };
+
+    targetVideo.addEventListener('loadeddata', handleVideoLoad, { once: true });
+    targetVideo.addEventListener('error', handleVideoError, { once: true });
+    targetVideo.src = videoUrl;
+    targetVideo.load();
+};
+
+VideoManager.crossfadeToPreparedVideo = function (isInitial = false) {
+    if (STATE.isTransitioning || !STATE.nextVideoReady) return;
+
+    const previousVideo = STATE.activeVideo;
+    const preparedVideo = STATE.inactiveVideo;
+    const preparedIndex = STATE.nextVideoIndex;
+
+    STATE.isTransitioning = true;
+    preparedVideo.muted = previousVideo.muted;
+    preparedVideo.loop = STATE.mode === 'hold';
+    preparedVideo.currentTime = 0;
+
+    preparedVideo.play().then(() => {
+        previousVideo.style.opacity = '0';
+        preparedVideo.style.opacity = '1';
+
+        STATE.activeVideo = preparedVideo;
+        STATE.inactiveVideo = previousVideo;
+        STATE.currentVideoIndex = preparedIndex;
+        STATE.nextVideoIndex = null;
+        STATE.nextVideoReady = false;
+        STATE.currentCycleComplete = false;
+        STATE.videoLoadCount++;
+
+        LOGGER.video(`${isInitial ? 'Started' : 'Crossfaded to'} video ${preparedIndex + 1}/${STATE.videoList.length}`);
+
+        setTimeout(() => {
+            previousVideo.pause();
+            previousVideo.style.opacity = '0';
+            STATE.isTransitioning = false;
+
+            const followingIndex = VideoManager.getSequentialIndex(STATE.currentVideoIndex);
+            VideoManager.preloadFlowVideo(followingIndex, false);
+        }, CONFIG.timeouts.crossfade);
+    }).catch(error => {
+        LOGGER.error('Error playing prepared video:', error);
+        STATE.failedVideoIndexes.add(preparedIndex);
+        STATE.nextVideoReady = false;
+        STATE.isTransitioning = false;
+        const replacementIndex = VideoManager.getSequentialIndex(preparedIndex);
+        VideoManager.preloadFlowVideo(replacementIndex, isInitial);
+    });
+};
+
+VideoManager.handleFlowEnded = function (event) {
+    if (event.target !== STATE.activeVideo || STATE.isTransitioning || STATE.mode === 'hold') return;
+
+    STATE.currentCycleComplete = true;
+    if (STATE.nextVideoReady) {
+        VideoManager.crossfadeToPreparedVideo(false);
+        return;
+    }
+
+    // Loop the current work only while its successor is still loading.
+    STATE.activeVideo.loop = true;
+    STATE.activeVideo.currentTime = 0;
+    STATE.activeVideo.play().catch(error => LOGGER.debug('Waiting-loop playback error:', error));
+};
+
+VideoManager.toggleFlowHold = function () {
+    if (!STATE.activeVideo || STATE.currentVideoIndex < 0) return;
+
+    if (STATE.mode === 'flow') {
+        STATE.mode = 'hold';
+        STATE.currentCycleComplete = false;
+        STATE.activeVideo.loop = true;
+        LOGGER.user('Playback mode changed to Hold');
+    } else {
+        STATE.mode = 'flow';
+        STATE.currentCycleComplete = false;
+        STATE.activeVideo.loop = false;
+
+        if (STATE.activeVideo.ended) {
+            STATE.activeVideo.currentTime = 0;
+            STATE.activeVideo.play().catch(error => LOGGER.debug('Flow resume error:', error));
+        }
+        LOGGER.user('Playback mode changed to Flow');
+    }
+
+    showModeNotification();
+};
+
 UIStateManager.toggleFullscreen = function () {
     // Clear any active notification timeout and hide notifications
     clearTimeout(TIMEOUTS.notification);
     ELEMENTS.soundNotification.classList.remove('show');
     ELEMENTS.loading.classList.remove('show');
+    ELEMENTS.nextButton.classList.remove('show');
+    ELEMENTS.humanAnalyticaButton.classList.remove('show');
 
     if (document.fullscreenElement) {
         document.exitFullscreen().catch(err => {
             LOGGER.debug('Error exiting fullscreen:', err);
         });
     } else {
-        ELEMENTS.videoContainer.requestFullscreen().catch(err => {
+        document.documentElement.requestFullscreen().catch(err => {
             LOGGER.debug('Error entering fullscreen:', err);
         });
     }
@@ -255,7 +448,13 @@ const STATE = {
     hasShownLoadingOnce: false,
     hasShownInitialInstructions: false,
     eventHandlersSetup: false, // Track if event handlers have been set up
-    videoLoadCount: 0 // Track how many videos have been loaded (for first video detection)
+    videoLoadCount: 0, // Track how many videos have been loaded (for first video detection)
+    failedVideoIndexes: new Set(),
+    mode: 'flow',
+    nextVideoIndex: null,
+    nextVideoReady: false,
+    currentCycleComplete: false,
+    preloadRequestId: 0
 };
 
 
@@ -342,8 +541,19 @@ function setupEventHandlers() {
 }
 
 function setupWindowHandlers() {
-    // Window resize and fullscreen change handlers can go here if needed
-    // Currently the window load handler is at the bottom of the file
+    ELEMENTS.video.addEventListener('ended', VideoManager.handleFlowEnded);
+    ELEMENTS.video2.addEventListener('ended', VideoManager.handleFlowEnded);
+    document.addEventListener('fullscreenchange', () => {
+        if (document.fullscreenElement) {
+            clearTimeout(TIMEOUTS.notification);
+            ELEMENTS.soundNotification.classList.remove('show');
+            ELEMENTS.soundNotification.setAttribute('aria-hidden', 'true');
+            ELEMENTS.loading.classList.remove('show');
+            ELEMENTS.loading.setAttribute('aria-hidden', 'true');
+            ELEMENTS.nextButton.classList.remove('show');
+            ELEMENTS.humanAnalyticaButton.classList.remove('show');
+        }
+    });
 }
 
 function setupButtonHandlers() {
@@ -396,6 +606,7 @@ function setupVideoContainerHandlers() {
             // Immediately hide any notifications that might have appeared
             ELEMENTS.soundNotification.classList.remove('show');
             ELEMENTS.loading.classList.remove('show');
+            ELEMENTS.loading.setAttribute('aria-hidden', 'true');
             UIStateManager.toggleFullscreen();
             clickCount = 0;
         } else {
@@ -404,8 +615,8 @@ function setupVideoContainerHandlers() {
                     LOGGER.user('Single click detected - toggle mute');
                     VideoManager.toggleMute();
                 } else if (clickCount === 2) {
-                    LOGGER.user('Double click detected - load next video');
-                    VideoManager.transitionToNext(true);
+                    LOGGER.user('Double click detected - toggle Flow/Hold');
+                    VideoManager.toggleFlowHold();
                 }
                 clickCount = 0;
             }, CONFIG.timeouts.clickDelay);
@@ -487,8 +698,8 @@ function setupTouchHandlers() {
                 }, CONFIG.timeouts.clickDelay);
             } else if (tapCount === 2) {
                 clearTimeout(tapTimer);
-                LOGGER.user('Double tap detected - load next video');
-                VideoManager.transitionToNext(true);
+                LOGGER.user('Double tap detected - toggle Flow/Hold');
+                VideoManager.toggleFlowHold();
                 tapCount = 0;
             }
         }
@@ -497,12 +708,22 @@ function setupTouchHandlers() {
 
 function setupKeyboardHandlers() {
     document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && STATE.infoAreaVisible) {
+            e.preventDefault();
+            toggleInfoArea();
+            return;
+        }
+
+        if (e.target.closest('button, a, input, textarea, select')) return;
+
         if (e.key === ' ') {
             e.preventDefault();
             LOGGER.user('Space key pressed - toggle mute');
             VideoManager.toggleMute();
-        } else if (e.key === 'n' || e.key === 'N') {
-            // Add your handler for 'n' key here if needed
+        } else if (e.key === 'f' || e.key === 'F') {
+            e.preventDefault();
+            LOGGER.user('F key pressed - toggle Flow/Hold');
+            VideoManager.toggleFlowHold();
         } else if (e.key === 'i' || e.key === 'I') {
             e.preventDefault();
             LOGGER.user('I key pressed - toggle device info');
@@ -520,6 +741,8 @@ function toggleInfoArea() {
     LOGGER.user('Info area toggle requested, current state:', STATE.infoAreaVisible);
     if (STATE.infoAreaVisible) {
         ELEMENTS.infoArea.classList.remove('show');
+        ELEMENTS.infoArea.setAttribute('aria-hidden', 'true');
+        ELEMENTS.nextButton.setAttribute('aria-expanded', 'false');
         STATE.infoAreaVisible = false;
         LOGGER.ui('Info area hidden');
 
@@ -541,6 +764,8 @@ function toggleInfoArea() {
         }, 300); // Wait for CSS transition to complete
     } else {
         ELEMENTS.infoArea.classList.add('show');
+        ELEMENTS.infoArea.setAttribute('aria-hidden', 'false');
+        ELEMENTS.nextButton.setAttribute('aria-expanded', 'true');
         STATE.infoAreaVisible = true;
 
         // Only hide bottom buttons if device info is NOT visible
@@ -566,28 +791,53 @@ function showInitialNotification() {
 
     // Set initial instruction text
     if (mobile) {
-        text.innerHTML = 'One Tap<br>Sound On<br><br>Two Taps<br>Next One';
+        document.getElementById('info-close-hint').textContent = 'Tap anywhere to close';
+        text.innerHTML = 'One Tap<br>Sound On / Off<br><br>Two Taps<br>Flow / Hold';
     } else {
-        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-        if (isMac) {
-            text.innerHTML = 'One Click Sound On<br><br>Two Clicks Next One<br><br>Three Clicks Full Screen';
-        } else {
-            text.innerHTML = 'One Click Sound On<br><br>Two Clicks Next One<br><br>Three Clicks Full Screen';
-        }
+        text.innerHTML = 'One Click<br>Sound On / Off<br><br>Two Clicks<br>Flow / Hold<br><br>Three Clicks<br>Full Screen';
     }
 
     // Show the notification and buttons
     ELEMENTS.soundNotification.classList.add('show');
-    ELEMENTS.nextButton.classList.add('show');
-    ELEMENTS.humanAnalyticaButton.classList.add('show');
+    ELEMENTS.soundNotification.setAttribute('aria-hidden', 'false');
+    if (!document.fullscreenElement) {
+        ELEMENTS.nextButton.classList.add('show');
+        ELEMENTS.humanAnalyticaButton.classList.add('show');
+    }
     LOGGER.ui('Showing initial notification and buttons');
 
-    // Auto-hide notification after a delay, but keep buttons visible
+    // Auto-hide the center notification and bottom buttons together.
     clearTimeout(TIMEOUTS.notification);
     TIMEOUTS.notification = setTimeout(() => {
         ELEMENTS.soundNotification.classList.remove('show');
-        // Keep buttons visible on initial load - don't hide them
-        LOGGER.ui('Auto-hiding initial notification (keeping buttons visible)');
+        ELEMENTS.soundNotification.setAttribute('aria-hidden', 'true');
+        if (!STATE.infoVisible && !STATE.infoAreaVisible) {
+            ELEMENTS.nextButton.classList.remove('show');
+            ELEMENTS.humanAnalyticaButton.classList.remove('show');
+        }
+        LOGGER.ui('Auto-hiding initial notification and bottom buttons');
+    }, CONFIG.timeouts.ui);
+}
+
+function showModeNotification() {
+    const text = ELEMENTS.soundNotification.querySelector('.text');
+    text.innerHTML = STATE.mode === 'hold'
+        ? 'Hold<br><br>This image remains'
+        : 'Flow<br><br>The sequence continues';
+
+    clearTimeout(TIMEOUTS.notification);
+    ELEMENTS.soundNotification.classList.add('show');
+    ELEMENTS.soundNotification.setAttribute('aria-hidden', 'false');
+    ELEMENTS.nextButton.classList.add('show');
+    ELEMENTS.humanAnalyticaButton.classList.add('show');
+
+    TIMEOUTS.notification = setTimeout(() => {
+        ELEMENTS.soundNotification.classList.remove('show');
+        ELEMENTS.soundNotification.setAttribute('aria-hidden', 'true');
+        if (!STATE.infoVisible && !STATE.infoAreaVisible) {
+            ELEMENTS.nextButton.classList.remove('show');
+            ELEMENTS.humanAnalyticaButton.classList.remove('show');
+        }
     }, CONFIG.timeouts.ui);
 }
 
@@ -608,12 +858,14 @@ function showSoundNotification() {
     TIMEOUTS.notification = setTimeout(() => {
         // Show sound notification and bottom buttons
         ELEMENTS.soundNotification.classList.add('show');
+        ELEMENTS.soundNotification.setAttribute('aria-hidden', 'false');
         ELEMENTS.nextButton.classList.add('show');
         ELEMENTS.humanAnalyticaButton.classList.add('show');
 
         // Set hide timeout
         TIMEOUTS.notification = setTimeout(() => {
             ELEMENTS.soundNotification.classList.remove('show');
+            ELEMENTS.soundNotification.setAttribute('aria-hidden', 'true');
             // Only hide bottom buttons if device info is not visible
             if (!STATE.infoVisible) {
                 ELEMENTS.nextButton.classList.remove('show');
@@ -731,6 +983,8 @@ function init() {
     // Ensure both videos start muted (required for autoplay)
     STATE.activeVideo.muted = true;
     STATE.inactiveVideo.muted = true;
+    STATE.activeVideo.loop = false;
+    STATE.inactiveVideo.loop = false;
 
     // Set up event handlers
     setupEventHandlers();
@@ -748,8 +1002,8 @@ function init() {
             STATE.videoList = videoUrls;
             LOGGER.system(`Loaded ${STATE.videoList.length} ${deviceType} videos`);
 
-            // Load first video and show initial UI
-            VideoManager.loadNextVideo(false);
+            // Start randomly, then continue in numbered order.
+            VideoManager.startFlow();
 
             // Show initial notification after a brief delay
             setTimeout(() => {
@@ -763,7 +1017,7 @@ function init() {
         if (typeof videoUrls !== 'undefined' && videoUrls.length > 0) {
             STATE.videoList = videoUrls;
             LOGGER.system(`Loaded ${STATE.videoList.length} videos from legacy videoUrls`);
-            VideoManager.loadNextVideo(false);
+            VideoManager.startFlow();
 
             // Show initial notification after a brief delay
             setTimeout(() => {

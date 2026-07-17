@@ -5,73 +5,67 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description"
-        content="Human Analytica is a multimedia art series exploring the subtle, yet deeply unsettling dynamics of human interaction in our current era Using advanced AI diffusion techniques, each piece merges classical body figures and historic art poses with dreamlike dysmorphism: bodies stretch, merge, melt, and intertwine, capturing both vulnerability and exposure">
+        content="Human Analytica is a multimedia art series exploring the subtle, deeply unsettling dynamics of human interaction through AI-generated moving images.">
+    <meta name="theme-color" content="#000000">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Human Analytica">
+    <meta property="og:description" content="A multimedia art series exploring human interaction through dreamlike, distorted moving images.">
+    <meta property="og:url" content="https://humananalytica.art/">
+    <meta property="og:image" content="https://humananalytica.art/icon-512x512.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="canonical" href="https://humananalytica.art/">
     <title>Human Analytica</title>
     <!-- Updated: 25:08:09:19:56:00 -->
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192x192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="icon-512x512.png">
     <link rel="apple-touch-icon" sizes="192x192" href="icon-192x192.png">
     <link rel="apple-touch-icon" sizes="512x512" href="icon-512x512.png">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=0.024">
 </head>
 
 <body>
-    <div id="loading">
+    <div id="loading" role="status" aria-live="polite" aria-hidden="true">
         <span class="text">Loading Next </span>
     </div>
 
     <div id="video-container">
-        <video id="video" autoplay muted loop playsinline></video>
-        <video id="video2" autoplay muted loop playsinline style="opacity: 0;"></video>
+        <video id="video" autoplay muted playsinline preload="auto"></video>
+        <video id="video2" autoplay muted playsinline preload="auto" style="opacity: 0;"></video>
 
-        <div id="sound-notification">
+        <div id="sound-notification" role="status" aria-live="polite" aria-hidden="true">
             <span class="text">Sound Off</span>
         </div>
 
-        <div id="next-button">
+        <button id="next-button" type="button" aria-controls="info-area" aria-expanded="false">
             <span class="text">Info</span>
-        </div>
+        </button>
         <!-- Button width CSS moved to styles.css -->
     </div>
 
-    <div id="human-analytica-button">
+    <button id="human-analytica-button" type="button" aria-label="Visit escob.art">
         <span class="text">escob.art</span>
-    </div>
+    </button>
 
-    <div id="info-area">
-        <h2>Human Analytica</h2>
+    <div id="info-area" role="dialog" aria-modal="true" aria-labelledby="info-title" aria-hidden="true">
+        <span class="close-hint" id="info-close-hint">Click anywhere to close</span>
+        <h2 id="info-title">Human Analytica</h2>
 
-        <!-- Desktop content -->
-        <div class="desktop-content">
-
-            <p>Human Analytica is a multimedia art series exploring the subtle, yet deeply unsettling dynamics of human
-                interaction in our current era Using advanced AI diffusion techniques, each piece merges classical body
-                figures and historic art poses with dreamlike dysmorphism: bodies stretch, merge, melt, and intertwine,
-                capturing both vulnerability and exposure.
-            </p>
-            <p>A deliberate mix of artistic references—from historic masterpieces to modern motifs—serves to amplify the
-                sense of beauty disrupted by overt distortions. In this tension lies an ironic disturbance: viewers may
-                grasp a sense of aesthetic discomfort instantly or uncover further unease on closer inspection. This
-                interplay between elegance and abnormality is at the heart of the series’ critique.
-            </p>
-            <p>Human Analytica exists not only as a sequence of digital artworks, but as an electronic art
-                experience—the website itself forms part of the artwork. Every interaction, including this text and the
-                “info” button, is woven into the overall concept: an immersive space where art, technology, and the
-                theme of human interaction converge.
-            </p>
-            <p>If you seek to understand, reflect, or reimagine the state of our humanity in times of power shifts and
-                unsettling connection, allow yourself to linger. Discomfort may surface quickly, but meaning emerges
-                gradually—through the interplay of form, distortion, and digital presence.
-            </p>
-        </div>
-
-        <!-- Mobile content -->
-        <div class="mobile-content">
-            <p>Human Analytica is a multimedia art series exploring unsettling human interactions. Using AI diffusion,
-                it merges classical figures with dreamlike dysmorphism: bodies stretch, merge, melt, capturing
-                vulnerability and exposure. Mixing historic and modern art reveals beauty disrupted by distortions,
-                creating ironic disturbance. The website is part of electronic art, weaving art, and technology,
-                inviting reflection on humanity amid power shifts where discomfort and meaning emerge</p>
+        <div class="info-content">
+            <p><em>Humananalytica.art</em> is a multimedia art piece about the fragile, intimate, and unsettling ways
+                human beings connect today. In this work, the human body becomes a shifting landscape. Figures appear
+                within dreamlike spaces, surrounded by forms that feel both organic and architectural. Bodies stretch,
+                melt, merge, and dissolve into one another. They seem close, almost connected, yet also suspended in
+                tension.</p>
+            <p>The piece uses AI image and video techniques to bring together classical human poses, historic artistic
+                references, and surreal distortion. The result is a world that feels beautiful at first, then slowly
+                becomes strange. Elegance is present, but it is interrupted by discomfort.</p>
+            <p>Through movement, sound, light, and transformation, <em>Human Analytica</em> invites the viewer to
+                experience the body not as something fixed, but as something vulnerable, exposed, and constantly
+                changing. The figures appear to search for contact, but their connection is unstable, uncertain, and
+                sometimes overwhelming.</p>
+            <p>This work reflects on what it means to be human in a time of shifting power, digital presence, and fragile
+                relationships. Its discomfort may appear quickly, but its meaning reveals itself slowly, through bodies,
+                shadows, movement, and the strange beauty of transformation.</p>
         </div>
     </div>
 
@@ -85,11 +79,10 @@
         <div id="storage-key"></div>
         <div id="app-version"></div>
     </div>
-    </div>
 
     <!-- Load video URLs -->
-    <script src="video-urls.js"></script>
-    <script src="main.js"></script>
+    <script src="video-urls.js?v=0.024"></script>
+    <script src="main.js?v=0.024"></script>
 </body>
 
 </html>

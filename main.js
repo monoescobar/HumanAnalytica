@@ -1,6 +1,6 @@
 // main.js for Human Analytica - extracted from index.html
 
-const APP_VERSION = 'V0.024';
+const APP_VERSION = 'V0.025';
 
 // Configuration object for timeouts and settings
 const CONFIG = {
@@ -733,8 +733,8 @@ function setupKeyboardHandlers() {
 }
 
 function openHumanAnalytica() {
-    window.open('https://escob.art', '_self');
-    LOGGER.user('Opening escob.art website in same tab');
+    window.open('https://escobarte.com', '_blank', 'noopener,noreferrer');
+    LOGGER.user('Opening escobarte.com website in a new tab');
 }
 
 function toggleInfoArea() {
